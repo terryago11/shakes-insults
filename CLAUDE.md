@@ -18,7 +18,7 @@ Regenerate the packs from the curated spreadsheet: `pip install openpyxl && pyth
 
 ## Stack
 
-Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dependencies, no backend, no storage, no network requests. Local play on one device only; remote play is deliberately out of scope for now.
+Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dependencies, no backend, no network requests. The only storage is the three player names in `localStorage` (wrapped in try/catch, validated by `parseSavedNames`; `namesStorageKey: ""` in `config/settings.js` turns it off). Local play on one device only; remote play is deliberately out of scope for now.
 
 ## Key Files
 

@@ -28,6 +28,25 @@
     window.scrollTo(0, 0);
   }
 
+  // Names are remembered on this device only (localStorage). Storage can be blocked or throw
+  // (private windows, file:// in some browsers), so every access is wrapped and the game just
+  // works without it.
+  function loadNames() {
+    try {
+      return S.namesStorageKey ? G.parseSavedNames(localStorage.getItem(S.namesStorageKey), 3, S.nameMaxLength) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveNames(names) {
+    try {
+      if (S.namesStorageKey) localStorage.setItem(S.namesStorageKey, JSON.stringify(names));
+    } catch (e) {
+      /* remembering is a convenience; ignore */
+    }
+  }
+
   // state.names = [duelist 1, duelist 2, judge]
   let state = null;
   const duelist = (i) => state.names[i];
@@ -56,8 +75,8 @@
 
   function screenSetup(prev) {
     const packIds = Object.keys(G.packs);
-    const defaults = prev ? prev.names : t("defaultNames");
-    const nameInputs = defaults.map((n) => h("input", { type: "text", value: n, maxlength: 24, autocomplete: "off" }));
+    const defaults = prev ? prev.names : loadNames() || t("defaultNames");
+    const nameInputs = defaults.map((n) => h("input", { type: "text", value: n, maxlength: S.nameMaxLength, autocomplete: "off" }));
     const roundsSel = h(
       "select",
       {},
@@ -94,6 +113,7 @@
           scores: [0, 0],
           picks: [null, null],
         };
+        saveNames(state.names);
         screenHandoff(0);
       })
     );
@@ -222,7 +242,10 @@
       h("h2", {}, t("reveal.title")),
       h("div", { class: "cards" }, card(0), card(1)),
       h("p", { class: "ask" }, t("reveal.ask", { judge: judge() })),
-      h("div", { class: "btns" }, [0, 1].map((i) => btn(t("reveal.wins", { name: duelist(i) }), () => award(i), "block")))
+      h("div", { class: "btns" }, [
+        [0, 1].map((i) => btn(t("reveal.wins", { name: duelist(i) }), () => award(i), "block")),
+        btn(t("reveal.draw"), () => award(null), "block alt"),
+      ])
     );
   }
 
@@ -243,7 +266,7 @@
   function screenScores(winnerIdx) {
     show(
       roundKicker(),
-      h("h2", {}, t("scores.title", { name: duelist(winnerIdx) })),
+      h("h2", {}, winnerIdx === null ? t("scores.draw") : t("scores.title", { name: duelist(winnerIdx) })),
       scoreboard(),
       btn(t("scores.next"), () => {
         state.round += 1;

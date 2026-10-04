@@ -75,6 +75,22 @@ test("scoring: awardPoint is pure, leader handles ties", () => {
   assert.strictEqual(G.leader([2, 2]), null);
 });
 
+test("scoring: a draw (null) awards no point and does not mutate", () => {
+  const s = [1, 0];
+  assert.deepStrictEqual(G.awardPoint(s, null), [1, 0]);
+  assert.notStrictEqual(G.awardPoint(s, null), s);
+  assert.deepStrictEqual(s, [1, 0]);
+  assert.deepStrictEqual(G.awardPoint(s, 0), [2, 0], "0 is a winner, not a draw");
+});
+
+test("parseSavedNames accepts exactly the right shape and rejects the rest", () => {
+  assert.deepStrictEqual(G.parseSavedNames('["Ada"," Ben ","Cy"]', 3, 24), ["Ada", "Ben", "Cy"]);
+  assert.deepStrictEqual(G.parseSavedNames('["abcdef","b","c"]', 3, 4), ["abcd", "b", "c"]);
+  for (const bad of [null, "", "not json", "{}", '["a","b"]', '["a","b","c","d"]', '["a","b",3]', '["a","b",""]', '["a","b","  "]', '["a","b",null]']) {
+    assert.strictEqual(G.parseSavedNames(bad, 3, 24), null, `should reject ${bad}`);
+  }
+});
+
 test("text helpers: makeT fills placeholders, throws on a missing key; nth falls back", () => {
   const tt = G.makeT({ a: { b: "Round {n} for {who}" }, list: ["x"] });
   assert.strictEqual(tt("a.b", { n: 2 }), "Round 2 for {who}"); // unknown placeholders stay visible

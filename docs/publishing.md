@@ -42,7 +42,7 @@ GitHub and may have moved, so check GitHub's current documentation.
 ## Hosting
 
 The game is static files and needs no server. If hosted (for example GitHub Pages), serve it over
-HTTPS. See `SECURITY.md` for what it does and does not do (no storage, no network requests).
+HTTPS. See `SECURITY.md` for what it does and does not do (names remembered locally only, no network requests).
 
 ## Optional
 

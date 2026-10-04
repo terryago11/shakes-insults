@@ -69,10 +69,12 @@ InsultGame.text = {
     title: "Speake it aloud!",
     ask: "{judge}, whose Tongue hath the sharper Edge?",
     wins: "{name} wins",
+    draw: "A Draw. No Point",
   },
 
   scores: {
     title: "A Point to {name}",
+    draw: "A Draw. No Point is given",
     next: "The next Round",
   },
 
