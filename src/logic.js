@@ -52,11 +52,26 @@
     return null;
   }
 
-  // Judge picks the winning duelist (0 or 1). Returns a new scores array.
+  // Judge picks the winning duelist (0 or 1), or null for a draw (no point). Returns a new scores array.
   function awardPoint(scores, winnerIdx) {
     const next = scores.slice();
-    next[winnerIdx] += 1;
+    if (winnerIdx !== null) next[winnerIdx] += 1;
     return next;
+  }
+
+  // Reads the saved-names string from storage. Storage is untrusted (anyone can edit it, and it
+  // may be stale or corrupt), so anything that is not exactly `count` non-empty strings is
+  // ignored (null). Names are trimmed and cut to `maxLen`.
+  function parseSavedNames(raw, count, maxLen) {
+    let list;
+    try {
+      list = JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+    if (!Array.isArray(list) || list.length !== count) return null;
+    if (!list.every((n) => typeof n === "string" && n.trim() !== "")) return null;
+    return list.map((n) => n.trim().slice(0, maxLen));
   }
 
   // Index of the leader, or null on a tie.
@@ -87,7 +102,7 @@
     return list[n - 1] !== undefined ? list[n - 1] : String(n);
   }
 
-  const api = { packs, shuffle, wordText, registerPack, resolveColumns, buildInsult, validatePicks, awardPoint, leader, makeT, nth };
+  const api = { packs, shuffle, wordText, registerPack, resolveColumns, buildInsult, validatePicks, awardPoint, parseSavedNames, leader, makeT, nth };
   root.InsultGame = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);

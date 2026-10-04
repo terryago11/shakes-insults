@@ -81,12 +81,13 @@ def main():
 
         names = page.locator("label input")
         names.nth(0).fill("Ada"); names.nth(1).fill("Ben"); names.nth(2).fill("Cy<b>x")
-        page.select_option("select >> nth=0", index=0)
+        page.select_option("select >> nth=0", index=1)  # five rounds
         rounds = int(page.locator("select").first.input_value())
         go(page)  # begin
         audit(page, "handoff")
 
-        winners = (["Ada", "Ben", "Ada"] * 3)[:rounds]
+        winners = ["Ada", "Ben", None, "Ada", "Ada"][:rounds]  # None = the judge calls a draw (round 3)
+        assert rounds == 5, "this script expects the second round option to be five rounds"
         for rnd, winner in enumerate(winners, 1):
             insults = {}
             for who, picks in (("Ada", (0, 1, 2)), ("Ben", (5, 4, 3))):
@@ -118,17 +119,24 @@ def main():
             audit(page, "reveal")
             if rnd == 1:
                 shot(page, "4-reveal", full_page=True)
-            page.locator(".btns .btn").nth(0 if winner == "Ada" else 1).tap()  # judge picks the winner
+            assert page.locator(".btns .btn").count() == 3, "reveal offers two winners and a draw"
+            page.locator(".btns .btn").nth({"Ada": 0, "Ben": 1, None: 2}[winner]).tap()  # judge's verdict
             if rnd < len(winners):
                 audit(page, "scores")
+                if winner is None:
+                    assert page.locator(".score strong").all_inner_texts() == ["1", "1"], "a draw must not change the scores"
                 go(page)  # next round
 
-        assert page.locator(".score strong").all_inner_texts() == [str(winners.count("Ada")), str(winners.count("Ben"))]
+        assert page.locator(".score strong").all_inner_texts() == [str(winners.count("Ada")), str(winners.count("Ben"))]  # draws score nothing
         shot(page, "5-final")
         audit(page, "final")
         page.locator("main .btn.alt").tap()  # change setup
         assert page.locator("#app b").count() == 0, "player names must never be parsed as HTML"
         assert page.locator("label input").nth(2).input_value() == "Cy<b>x"
+
+        # Names are remembered on this device: a fresh load of the page offers them again.
+        page.reload()
+        assert [page.locator("label input").nth(i).input_value() for i in range(3)] == ["Ada", "Ben", "Cy<b>x"], "names should be remembered"
 
         wide = browser.new_context(viewport={"width": 1100, "height": 900}).new_page()
         wide.goto(URL)

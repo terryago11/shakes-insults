@@ -4,4 +4,6 @@ InsultGame.settings = {
   defaultRounds: 5,
   countdownStepMs: 800, // time each countdown word is shown
   countdownLastMs: 500, // time the final "go" word is shown
+  nameMaxLength: 24, // longest player name (also the limit on the setup inputs)
+  namesStorageKey: "shakes-insults.names", // where the three names are remembered on this device; set to "" to turn remembering off
 };

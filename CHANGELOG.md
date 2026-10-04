@@ -2,6 +2,13 @@
 
 Newest first.
 
+## Unreleased
+
+- **Tie option**: the judge can call a round a draw ("A Draw. No Point"); nobody scores. `awardPoint(scores, null)` leaves the scores unchanged.
+- **Remembered names**: the three player names are kept in `localStorage` on the device and offered again on the next visit. Storage failures (blocked, private window) are ignored; saved data is validated by `parseSavedNames`. Turn off with `namesStorageKey: ""` in `config/settings.js`. SECURITY.md updated: the game no longer claims "no storage".
+- **CI**: `.github/workflows/test.yml` runs `npm test` on Node 20 and 22 for pushes to `main` and pull requests.
+- Browser smoke test now plays five rounds including a draw, and checks that names survive a reload.
+
 ## 0.2.1 — 2026-10-04
 
 - Word lists declared public domain (per the owner); `meta.license` set in both packs, README and SECURITY.md updated.
