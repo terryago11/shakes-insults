@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shakespearean Insult Duel</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header><h1>Insult Duel</h1></header>
+  <main id="app"></main>
+  <footer id="credit"></footer>
+
+  <!-- Game logic first, then word packs, then the UI. Plain scripts (not modules) so
+       index.html also works when double-clicked from disk. -->
+  <script src="src/logic.js"></script>
+
+  <!-- WORD BANKS: add, remove or swap pack files here. See README.md. -->
+  <script src="packs/short.js"></script>
+  <script src="packs/full.js"></script>
+
+  <script src="src/app.js"></script>
+</body>
+</html>

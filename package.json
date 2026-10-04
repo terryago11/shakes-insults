@@ -1,0 +1,9 @@
+{
+  "name": "shakes-insults",
+  "private": true,
+  "description": "Three-player Shakespearean insult duel: two duelists, one judge.",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "test": "node --test"
+  }
+}
