@@ -53,7 +53,7 @@ The shipped game has **no runtime dependencies**. Development tooling is limited
 
 ## License
 
-The code is licensed under the [MIT License](./LICENSE). The bundled fonts are under the SIL Open Font License (`fonts/OFL.txt`). The word lists are drawn from various sources and are in the public domain; see the README.
+The code is licensed under the [MIT License](./LICENSE). The bundled fonts are under the SIL Open Font License (`fonts/OFL.txt`). The words are curated from various sources and are in the public domain.
 
 ## Maintainers
 

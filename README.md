@@ -70,7 +70,7 @@ it looks the way it does.
 ## Credits and licenses
 
 - Built by Natan Skop (Theater in the Rough). The code is under the [MIT License](./LICENSE).
-- The words come from various sources and are in the public domain (per the project owner).
+- The words are curated from various sources and are in the public domain.
 - Fonts: IM Fell, bundled under the SIL Open Font License (`fonts/OFL.txt`).
 
 Security policy: [SECURITY.md](./SECURITY.md).
