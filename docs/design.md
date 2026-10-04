@@ -10,16 +10,16 @@ how early printed sheets were actually put together.
    margins and line-spacing are the Neoclassical ideal (Bodoni); that is the style to avoid.
 2. **Unequal and slightly off.** Columns have different widths and different rule weights. Red
    sits a little off-register from the black, like colour applied by hand over a printed block.
-3. **Hand-coloured accents.** Red for the drop cap, the picked words, the kicker line and
-   the button shadow. Red is an accent, not a second printing colour.
+3. **Hand-coloured accents.** Red for the drop cap, the kicker line and the button shadow (and
+   the first column's words; see Column colours). Red is an accent, not a second printing colour.
 4. **Drop cap.** Each lede paragraph starts with a large red initial in a printed box, with the
    black plate ghosted off-register. Built with `::first-letter`, so the text stays whole for
    screen readers.
 5. **Title-page structure.** A long descriptive title, who it is for, and a printer's imprint
    in the footer.
 6. **Repeated ornament.** A strip of printers' marks (¶ § † ‡) rather than a clean divider.
-7. **Picked words** get a red hand-drawn-style underline and a pointing hand (☞), not a modern
-   focus ring.
+7. **Picked words** get a hand-drawn-style underline in their column's colour and a pointing
+   hand (☞), not a modern focus ring.
 
 8. **Old-style copy.** Explanatory text capitalises Nouns and uses period spellings ("Slaunder",
    "Columne", "Chuse", "Shew", "Iudge", "giue eare"). Kept light so a phone player can still read

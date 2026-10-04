@@ -6,7 +6,7 @@ A three-player Shakespearean insult game for one shared phone (or any device). T
 
 ```bash
 npm start            # serve the folder at http://localhost:8000 (python3 http.server)
-npm test             # node --test: logic, pack lint, text-config checks (Node 18+, no dependencies)
+npm test             # node --test: logic, pack lint, text-config checks (Node 20+, no dependencies; CI runs 20 and 22)
 npm run test:e2e     # optional phone-sized browser run: pip install playwright
                      # (set CHROMIUM=/path/to/chromium if Playwright's own download is unavailable;
                      #  SHOTS=/some/dir also saves screenshots)
@@ -26,9 +26,9 @@ Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dep
 |------|---------|
 | `index.html` | Loads scripts in order: `src/logic.js`, `config/*.js`, `packs/*.js`, then `src/app.js`. Contains no player-facing text |
 | `config/text.js` | **All player-facing text** (titles, buttons, flavour copy, countdown, ordinals, footer). Edited to re-skin or translate |
-| `config/settings.js` | Round choices, default rounds, countdown timing |
+| `config/settings.js` | Round choices, default rounds, countdown timing, name length, names storage key |
 | `packs/*.js` | **The word banks.** One file per pack, each calls `InsultGame.registerPack({...})` |
-| `src/logic.js` | Pure game logic (`shuffle`, `registerPack`, `resolveColumns`, `buildInsult`, `validatePicks`, `awardPoint`, `leader`) and text helpers (`makeT`, `nth`). No DOM. Exposed as `window.InsultGame` and `module.exports` |
+| `src/logic.js` | Pure game logic (`shuffle`, `registerPack`, `resolveColumns`, `buildInsult`, `validatePicks`, `awardPoint` (null = draw), `parseSavedNames`, `leader`) and text helpers (`makeT`, `nth`). No DOM. Exposed as `window.InsultGame` and `module.exports` |
 | `src/app.js` | UI: screen-by-screen state machine (setup → handoff → pick → ready → countdown → reveal → scores/final) |
 | `style.css` | All styling, mobile-first; no `content:` strings |
 | `fonts/` | Bundled IM Fell woff2 files + `OFL.txt` (SIL OFL) + provenance note |
@@ -37,6 +37,7 @@ Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dep
 | `test/logic.test.js` | Node tests: logic, pack lint, text-config checks, "no text in html/css" |
 | `test/e2e/smoke.py` | Phone-sized browser run of a full game (see Dev Commands) |
 | `docs/design.md` | Visual design principles and their sources |
+| `.github/workflows/test.yml` | CI: `npm test` on Node 20 and 22 for pushes to `main` and pull requests (the e2e test is not in CI) |
 
 ## Word Pack Format
 
