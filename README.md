@@ -23,9 +23,8 @@ judges who won. Everyone takes turns.
 ## Try it
 
 No install, no internet needed. Download or clone this folder and open `index.html` in a
-browser. To play on a phone, put the folder on any web host (the game is only static files), or
-run `npm start` on a computer and open `http://<your computer's address>:8000` on a phone on the
-same network.
+browser. To play on a phone, put the folder on any static web host (it is only plain files) and
+open its address on the phone.
 
 It has been tested only in a desktop browser pretending to be a phone, not yet on a real iPhone
 or Android. If something looks wrong on your phone, please say so.
@@ -63,6 +62,7 @@ The two shipped packs are generated from `reference/Insults.xlsx` by `scripts/xl
 ## For developers
 
 ```bash
+npm start          # serve the folder at http://localhost:8000
 npm test           # unit tests, word-pack and text checks (Node 20 or newer)
 npm run test:e2e   # optional full game in a phone-sized browser (pip install playwright)
 ```
