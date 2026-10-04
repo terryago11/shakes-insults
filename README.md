@@ -1,38 +1,45 @@
 # Insult Duel
 
-A three-player Shakespearean insult game for one shared phone (or any device). Two duelists
-each build an insult ("Thou ___ ___ ___!") by hand from the same word bank, shown to each in a
-different random order. They say them aloud on "III, II, I, SPEAK!", and the third player, the
-judge, picks the winner. Winner of each round gets a point.
+A Shakespearean insult game for three people and one phone. Two players trade insults built
+from Shakespeare-style words ("Thou artless, reeling-ripe hedge-pig!"). The third player judges
+who won.
 
-Built to be played on phones first. The look borrows from early printed broadsheets: dense type,
-heavy and light rules, a hand-coloured red drop cap, deliberately not tidy.
+## How to play
 
-## Run it
+1. Gather three people. Hand the phone around when asked.
+2. Type three names: two duelists and one judge. Choose how many rounds.
+3. Each duelist, in turn, builds an insult in secret by tapping one word from each of the three
+   columns. The columns are shuffled differently for each player, and there is no random button.
+4. When both are ready, a countdown runs: **III, II, I, SPEAK!** Both duelists say their insult
+   aloud at the same time.
+5. The judge picks the winner of the round, or calls it a draw. A win is one point.
+6. After the last round the highest score wins, or it is a draw.
 
-No build step and no dependencies. Open `index.html` in a browser, or serve the folder:
+## Try it
 
-```bash
-npm start          # http://localhost:8000
-npm test           # logic, word packs and text-config checks (Node 18+)
-npm run test:e2e   # optional phone-sized browser run (pip install playwright)
-```
+No install, no internet needed. Download or clone this folder and open `index.html` in a
+browser. To play on a phone, put the folder on any web host (the game is only static files), or
+run `npm start` on a computer and open `http://<your computer's address>:8000` on a phone on the
+same network.
 
-## Make it yours
+It has been tested only in a desktop browser pretending to be a phone, not yet on a real iPhone
+or Android. If something looks wrong on your phone, please say so.
 
-Everything someone would want to swap is in plain files, not in the code:
+The game remembers the three names on your device so you don't retype them. It sends nothing
+anywhere and uses no cookies or tracking.
 
-| What | Where |
-|------|-------|
-| Every word of text players see (titles, buttons, countdown, flavour copy) | `config/text.js` |
-| Game settings (round choices, countdown timing) | `config/settings.js` |
-| The word banks | `packs/*.js` |
-| Colours, fonts, spacing | `style.css` (variables at the top) |
+## Change it
 
-`npm test` fails if the code uses a text key missing from `config/text.js`, if a key there is
-never used, or if text creeps into `index.html` or `style.css`.
+Words, text and settings are plain files, so you can re-skin it without touching the code.
 
-### Word packs
+| To change | Edit |
+|-----------|------|
+| Any text players see (titles, buttons, the countdown) | `config/text.js` |
+| Number-of-rounds choices, countdown speed, name memory | `config/settings.js` |
+| The words | `packs/*.js` (see below) |
+| Colours and fonts | the variables at the top of `style.css` |
+
+A word pack lists the words for each column:
 
 ```js
 InsultGame.registerPack({
@@ -44,29 +51,26 @@ InsultGame.registerPack({
 });
 ```
 
-Then add `<script src="packs/mine.js"></script>` in `index.html`. A pool word may also be
-`{ w: "artless", tags: [], src: "play, act.scene" }`; only `w` is used for now.
-`npm test` fails if a pack has blank or duplicate words.
+Save it as `packs/mine.js` and add `<script src="packs/mine.js"></script>` to `index.html`.
+The two shipped packs are generated from `reference/Insults.xlsx` by `scripts/xlsx-to-pack.py`
+(needs `pip install openpyxl`).
 
-`scripts/xlsx-to-pack.py reference/Insults.xlsx` regenerates `short.js` and `full.js` from the
-curated spreadsheet in `reference/` (needs `pip install openpyxl`).
+## For developers
 
-## Rules as implemented
+```bash
+npm test           # unit tests, word-pack and text checks (Node 20 or newer)
+npm run test:e2e   # optional full game in a phone-sized browser (pip install playwright)
+```
 
-- Duelists never see each other's picks until the countdown ends.
-- No random-insult button: every word is chosen by hand, and the same word cannot fill two columns.
-- Each duelist's columns are shuffled independently, every round.
-- The judge (player 3) is fixed for the whole game.
+Plain HTML, CSS and JavaScript, with no framework, build step or dependencies. Read
+[CLAUDE.md](./CLAUDE.md) for the code layout and conventions, [ROADMAP.md](./ROADMAP.md) for
+ideas, [CHANGELOG.md](./CHANGELOG.md) for history, and [docs/design.md](./docs/design.md) for why
+it looks the way it does.
 
 ## Credits and licenses
 
-- **Built by Natan Skop (Theater in the Rough).**
-  The code is released under the [MIT License](./LICENSE).
-- **The words** come from various sources and are in the public domain (per the project owner).
-  The curated spreadsheet and PDF this game was built from credit "Theater in the Rough | Insults
-  Game" for the game sheet but name no sources for the individual words. The MIT license covers
-  the code; the word lists need no license.
-- **Fonts**: IM Fell English, IM Fell English SC and IM Fell Double Pica, bundled under the SIL
-  Open Font License (`fonts/OFL.txt`, `fonts/README.md`).
+- Built by Natan Skop (Theater in the Rough). The code is under the [MIT License](./LICENSE).
+- The words come from various sources and are in the public domain (per the project owner).
+- Fonts: IM Fell, bundled under the SIL Open Font License (`fonts/OFL.txt`).
 
-See [SECURITY.md](./SECURITY.md) for the security policy.
+Security policy: [SECURITY.md](./SECURITY.md).

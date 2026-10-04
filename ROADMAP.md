@@ -7,6 +7,7 @@ Shipped work lives in [CHANGELOG.md](./CHANGELOG.md). Nothing below is committed
 - **Rotating judge** — each round a different player judges, so all three play (a change to `judge()`, `award` and the handoff flow in `src/app.js`).
 - **Remember round count and word pack too** — names are already remembered; the same storage code could cover these.
 - **Publish the repo** — work through `docs/publishing.md` (security settings, history check) first.
+- **Browser test in CI** — add `npm run test:e2e` to the workflow (needs a browser install step).
 - **Static hosting** — publish via GitHub Pages (needs no build step).
 
 ## Medium

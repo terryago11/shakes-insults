@@ -39,5 +39,5 @@ Initial version.
 - "3 · 2 · 1 · GO!" countdown, then both insults are revealed and the judge picks the round winner (1 point per round).
 - Between-round scoreboard and a final screen with "Play again" / "Change setup".
 - Word banks live in `packs/*.js` (one file per pack): `short` (66 words per column) and `full` (145 adjectives, 82 nouns), generated from the curated spreadsheet with `scripts/xlsx-to-pack.py`.
-- Works from `file://` (double-click `index.html`) or any static host; light and dark themes; responsive layout.
+- Works from `file://` (double-click `index.html`) or any static host; responsive layout.
 - Unit tests for the game logic and a lint over every shipped pack (`npm test`).
