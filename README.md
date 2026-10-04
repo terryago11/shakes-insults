@@ -32,7 +32,7 @@ Then add `<script src="packs/mine.js"></script>` in `index.html`. A pool word ma
 `{ w: "artless", tags: [], src: "play, act.scene" }`; only `w` is used for now.
 `npm test` fails if a pack has blank or duplicate words.
 
-`scripts/xlsx-to-pack.py` regenerates `short.js` and `full.js` from the curated spreadsheet.
+`scripts/xlsx-to-pack.py reference/Insults.xlsx` regenerates `short.js` and `full.js` from the curated spreadsheet in `reference/`.
 
 ## Rules as implemented
 

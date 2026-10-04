@@ -2,6 +2,10 @@
 
 Newest first.
 
+## Unreleased
+
+- Added the curated word-list spreadsheet as `reference/Insults.xlsx`.
+
 ## 0.1.0 — 2026-10-04
 
 Initial version.

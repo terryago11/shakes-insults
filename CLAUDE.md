@@ -11,7 +11,7 @@ npm test         # node --test: logic + word-pack lint (Node 18+, no dependencie
 
 `index.html` also works by double-clicking it (`file://`). Keep it that way (see conventions).
 
-Regenerate the packs from the curated spreadsheet: `pip install openpyxl && python3 scripts/xlsx-to-pack.py path/to/Insults.xlsx` (overwrites `packs/short.js` and `packs/full.js`).
+Regenerate the packs from the curated spreadsheet: `pip install openpyxl && python3 scripts/xlsx-to-pack.py reference/Insults.xlsx` (overwrites `packs/short.js` and `packs/full.js`).
 
 ## Stack
 
@@ -62,4 +62,4 @@ InsultGame.registerPack({
 
 ## Git
 
-Default branch is `main`. The word list originates from a curated spreadsheet that is not committed to this repo; the pack files are the source of truth in-repo.
+Default branch is `main`. The curated spreadsheet is committed at `reference/Insults.xlsx` (sheets `full` and `short`). It is the reference copy of the word list; the pack files in `packs/` are what the game actually reads.
