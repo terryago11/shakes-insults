@@ -4,13 +4,15 @@ Shipped work lives in [CHANGELOG.md](./CHANGELOG.md). Nothing below is committed
 
 ## Small
 
-- **Rotating judge** — each round a different player judges, so all three play (a change to `judge()`, `award` and the handoff flow in `src/app.js`).
 - **Remember round count and word pack too** — names are already remembered; the same storage code could cover these.
 - **Publish the repo** — work through `docs/publishing.md` (security settings, history check) first.
 - **Browser test in CI** — add `npm run test:e2e` to the workflow (needs a browser install step).
 - **Static hosting** — publish via GitHub Pages (needs no build step).
 
 ## Medium
+
+- **Fairer scoring for uneven games** — duel counts can differ by one player (and the judge scores nothing), so when rounds are not a multiple of what suits the player count, some players had fewer chances to score. Options: a points-per-duel average, a hint on the setup screen suggesting a round count, or points for judging.
+- **Name collisions** — two players can be given the same name; the scoreboard then looks ambiguous.
 
 - **"Where's it from?" reveal** — use the optional `src` field on words to show a play/act/scene citation after each round. Needs curated citations; no complete open dataset with line references was found when this was researched.
 - **Scoring options beyond judge-only** — per-word `tags` with a counter table (e.g. beast vs. body), or derived stats (hyphenated-compound bonus, alliteration). Playtest first; these are untested ideas.

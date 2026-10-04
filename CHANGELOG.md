@@ -4,6 +4,10 @@ Newest first.
 
 ## Unreleased
 
+- **Rotating players (3 to 10)**: setup takes a list of players (add and "strike out" seats, 3 to 10) instead of two duelists and a fixed judge. Every round, two players duel and another judges; roles rotate and a score is kept per player across the whole game, even with three players. The rounds field is a number (minimum 3, maximum 30, default 5) instead of a 3/5/7/9 menu. The matchup ("A against B, with C as Judge") is shown when the device is handed over.
+- **Planner**: `planRounds(players, rounds)` in `src/logic.js` orders duels in cycles in which every pair meets once and duel counts stay level (so stopping after any round is fair), with judges spread as evenly as possible. Property-tested for 3 to 10 players. An earlier greedy version repeated pairings too early at 6 or more players and was replaced before release.
+- **Final screen**: the board is ranked; several players on the top score are reported as a tie naming them all.
+- **Settings**: `roundOptions` replaced by `minPlayers`, `maxPlayers`, `minRounds`, `maxRounds`. Text config: `defaultNames` became `defaultName`, `setup.duelist1/2`, `setup.judge`, `setup.roundsOption` and `final.draw` were replaced by new keys; the ordinals and cardinals now go up to ten. `parseSavedNames` takes a minimum and maximum count.
 - **Tie option**: the judge can call a round a draw ("A Draw. No Point"); nobody scores. `awardPoint(scores, null)` leaves the scores unchanged.
 - **Remembered names**: the three player names are kept in `localStorage` on the device and offered again on the next visit. Storage failures (blocked, private window) are ignored; saved data is validated by `parseSavedNames`. Turn off with `namesStorageKey: ""` in `config/settings.js`. SECURITY.md updated: the game no longer claims "no storage".
 - **CI**: `.github/workflows/test.yml` runs `npm test` on Node 20 and 22 for pushes to `main` and pull requests.

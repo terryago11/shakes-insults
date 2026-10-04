@@ -1,19 +1,22 @@
 # Insult Duel
 
-A Shakespearean insult game for three people and one phone. Two players trade insults built
-from Shakespeare-style words ("Thou artless, reeling-ripe hedge-pig!"). The third player judges
-who won.
+A Shakespearean insult game for three to ten people and one phone. Two players trade insults
+built from Shakespeare-style words ("Thou artless, reeling-ripe hedge-pig!"). Another player
+judges who won. Everyone takes turns.
 
 ## How to play
 
-1. Gather three people. Hand the phone around when asked.
-2. Type three names: two duelists and one judge. Choose how many rounds.
-3. Each duelist, in turn, builds an insult in secret by tapping one word from each of the three
+1. Gather three to ten people. Hand the phone around when asked.
+2. Type everyone's name and choose how many rounds (at least three).
+3. Each round the game names two duelists and a judge, and the roles rotate so everyone gets
+   a turn at both. Each duelist, in turn, builds an insult in secret by tapping one word from each of the three
    columns. The columns are shuffled differently for each player, and there is no random button.
 4. When both are ready, a countdown runs: **III, II, I, SPEAK!** Both duelists say their insult
    aloud at the same time.
-5. The judge picks the winner of the round, or calls it a draw. A win is one point.
-6. After the last round the highest score wins, or it is a draw.
+5. The judge picks the winner of the round, or calls it a draw. A win is one point for the
+   winning duelist (the judge scores nothing).
+6. Scores add up over the whole game. After the last round the highest score wins. Equal top
+   scores are a tie.
 
 ## Try it
 
@@ -25,7 +28,7 @@ same network.
 It has been tested only in a desktop browser pretending to be a phone, not yet on a real iPhone
 or Android. If something looks wrong on your phone, please say so.
 
-The game remembers the three names on your device so you don't retype them. It sends nothing
+The game remembers the names on your device so you don't retype them. It sends nothing
 anywhere and uses no cookies or tracking.
 
 ## Change it
@@ -35,7 +38,7 @@ Words, text and settings are plain files, so you can re-skin it without touching
 | To change | Edit |
 |-----------|------|
 | Any text players see (titles, buttons, the countdown) | `config/text.js` |
-| Number-of-rounds choices, countdown speed, name memory | `config/settings.js` |
+| Player and round limits, countdown speed, name memory | `config/settings.js` |
 | The words | `packs/*.js` (see below) |
 | Colours and fonts | the variables at the top of `style.css` |
 

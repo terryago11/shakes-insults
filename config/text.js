@@ -14,11 +14,12 @@ InsultGame.text = {
   blank: "____",
 
   // Lists are indexed by number: ordinals[0] is "First".
-  romans: ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"],
-  ordinals: ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth"],
-  cardinals: ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"],
+  romans: ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"], // one per word column
+  ordinals: ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"],
+  cardinals: ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"],
 
-  defaultNames: ["Player 1", "Player 2", "Player 3"],
+  // Name offered for a seat that has been left blank ({n} is the seat number).
+  defaultName: "Player {n}",
 
   footer: {
     imprint: "Imprinted at the Signe of the Three Columnes. Sold without Warrantie against wounded Feelings.",
@@ -26,15 +27,15 @@ InsultGame.text = {
   },
 
   setup: {
-    kicker: "A Broadside for three Players",
+    kicker: "A Broadside for three Players or more",
     titleSmall: "A most Notable & Villanous",
     titleLarge: "Contention of Insults",
-    lede: "Two Duellists shall trade Slaunders, each built by Hand from the Three Columnes; a Third shall sit as Iudge, and say whose Tongue hath the sharper Edge.",
-    duelist1: "The First Duellist",
-    duelist2: "The Second Duellist",
-    judge: "The Iudge",
-    rounds: "Length of the Contention",
-    roundsOption: "{n} Rounds",
+    lede: "Three Players or more shall take Turns. Two Duel, trading Slaunders built by Hand from the Three Columnes; another sits as Iudge, and saith whose Tongue hath the sharper Edge. The Seats change every Round, and the Points are kept to the End.",
+    player: "The {ordinal} Player",
+    addPlayer: "Adde a Player",
+    remove: "Strike out",
+    removeLabel: "Strike out {name}",
+    rounds: "Length of the Contention (Rounds, at least {min})",
     pack: "The Word Banke",
     start: "Begin the Contention",
   },
@@ -43,6 +44,7 @@ InsultGame.text = {
 
   handoff: {
     title: "Passe the Device to {name}",
+    versus: "{a} against {b}, with {judge} as Iudge.",
     lede: "Let no Man peepe. Thy Chusing is secret vntil the Count be done.",
     button: "I am {name}. Shew my Columnes",
   },
@@ -80,7 +82,8 @@ InsultGame.text = {
 
   final: {
     winner: "{name} winneth the Contention!",
-    draw: "A Draw. Both Tongues are equally vile.",
+    tie: "A Tie between {names}. Their Tongues are equally vile.",
+    nameSeparator: ", ",
     again: "Play againe",
     change: "Alter the Setup",
   },

@@ -47,7 +47,7 @@ def word(page, c, k):
 
 def go(page):
     """Tap the screen's main button (begin, hand over, next, ...); found by position, not text."""
-    page.locator("main .btn").tap()
+    page.locator("main .btn").last.tap()
 
 
 def pick(page, picks):
@@ -57,6 +57,18 @@ def pick(page, picks):
         words.append(word(page, c, k).locator(".txt").inner_text())
         word(page, c, k).tap()
     return words
+
+
+# Names are compared via text_content(): the page upper-cases them with CSS, which inner_text() would return.
+def who_is_in(text, players):
+    """The one player whose name appears in `text` (names in this script never contain each other)."""
+    found = [p for p in players if p in text]
+    assert len(found) == 1, f"expected exactly one player name in {text!r}, found {found}"
+    return found[0]
+
+
+def read_scoreboard(page):
+    return [(el.locator("span").text_content(), el.locator("strong").text_content()) for el in page.locator(".score").all()]
 
 
 def main():
@@ -79,20 +91,50 @@ def main():
         shot(page, "1-setup", full_page=True)
         audit(page, "setup")
 
-        names = page.locator("label input")
-        names.nth(0).fill("Ada"); names.nth(1).fill("Ben"); names.nth(2).fill("Cy<b>x")
-        page.select_option("select >> nth=0", index=1)  # five rounds
-        rounds = int(page.locator("select").first.input_value())
+        # Seats: three to start with, nobody can be struck out at three, up to ten can be added.
+        seats = page.locator(".seat input")
+        add = page.locator(".fields + .btn")
+        assert seats.count() == 3, "three seats to start"
+        assert page.locator(".seat .btn").count() == 0, "nobody can be removed at the minimum of three players"
+        for _ in range(7):
+            add.tap()
+        assert seats.count() == 10 and add.is_disabled(), "ten players is the maximum"
+        assert len({seats.nth(i).input_value() for i in range(10)}) == 10, "added seats get distinct default names"
+        audit(page, "setup with ten players")
+        shot(page, "1b-setup-ten", full_page=True)
+        for _ in range(6):
+            page.locator(".seat .btn").last.tap()
+        assert seats.count() == 4 and not add.is_disabled()
+
+        names = ["Ada", "Ben", "Cy<b>x", "Dee"]
+        for i, n in enumerate(names):
+            seats.nth(i).fill(n)
+        page.locator(".seat .btn").nth(1).tap()  # strike out Ben (a middle seat): the others keep their names
+        assert [seats.nth(i).input_value() for i in range(3)] == ["Ada", "Cy<b>x", "Dee"]
+        add.tap()
+        seats.nth(3).fill("Ben")
+        players = ["Ada", "Cy<b>x", "Dee", "Ben"]  # seat order
+        assert [seats.nth(i).input_value() for i in range(4)] == players
+
+        page.locator("input[type=number]").fill("1")  # below the minimum of three rounds
         go(page)  # begin
         audit(page, "handoff")
 
-        winners = ["Ada", "Ben", None, "Ada", "Ada"][:rounds]  # None = the judge calls a draw (round 3)
-        assert rounds == 5, "this script expects the second round option to be five rounds"
-        for rnd, winner in enumerate(winners, 1):
-            insults = {}
-            for who, picks in (("Ada", (0, 1, 2)), ("Ben", (5, 4, 3))):
+        scores = {n: 0 for n in players}
+        duel_counts = {n: 0 for n in players}
+        pairs = set()
+        rnd = 0
+        while True:
+            rnd += 1
+            assert rnd <= 10, "the game should have ended after three rounds"
+            duelists, insults = [], {}
+            for slot, picks in enumerate(((0, 1, 2), (5, 4, 3))):
+                who = who_is_in(page.locator("main h2").text_content(), players)
+                versus = page.locator(".versus").text_content()
+                assert sum(n in versus for n in players) == 3, f"the matchup line should name three players: {versus!r}"
+                duelists.append(who)
                 go(page)  # hand over to this duelist
-                if rnd == 1 and who == "Ada":
+                if rnd == 1 and slot == 0:
                     audit(page, "pick")
                     shot(page, "2-pick-top")
                     word(page, 0, 2).tap(); page.wait_for_timeout(900)
@@ -113,35 +155,56 @@ def main():
                 assert len(colours) == 3 and len(set(colours)) == 3, f"each column's word should have its own colour: {colours}"
                 insults[who] = expected
                 page.locator(".bar .btn").tap()
+            assert duelists[0] != duelists[1], "a player cannot duel themselves"
             go(page)  # begin the count
             page.wait_for_selector(".insult", timeout=8000)
-            assert page.locator(".insult").all_inner_texts() == [insults["Ada"], insults["Ben"]], "revealed insults differ from locked-in picks"
+            assert page.locator(".card h3").all_text_contents() == duelists, "reveal should show the two duelists"
+            assert page.locator(".insult").all_inner_texts() == [insults[d] for d in duelists], "revealed insults differ from locked-in picks"
+            others = [n for n in players if n not in duelists]
+            ask = page.locator(".ask").text_content()
+            assert sum(n in ask for n in others) == 1 and not any(d in ask for d in duelists), f"the judge must be one of the other players: {ask!r}"
             audit(page, "reveal")
             if rnd == 1:
                 shot(page, "4-reveal", full_page=True)
             assert page.locator(".btns .btn").count() == 3, "reveal offers two winners and a draw"
-            page.locator(".btns .btn").nth({"Ada": 0, "Ben": 1, None: 2}[winner]).tap()  # judge's verdict
-            if rnd < len(winners):
-                audit(page, "scores")
-                if winner is None:
-                    assert page.locator(".score strong").all_inner_texts() == ["1", "1"], "a draw must not change the scores"
-                go(page)  # next round
+            verdict = rnd % 3  # round 1: first duelist wins, round 2: a draw, round 3: second duelist wins
+            page.locator(".btns .btn").nth({1: 0, 2: 2, 0: 1}[verdict]).tap()
+            for d in duelists:
+                duel_counts[d] += 1
+            pairs.add(frozenset(duelists))
+            if verdict == 1:
+                scores[duelists[0]] += 1
+            elif verdict == 0:
+                scores[duelists[1]] += 1
+            if page.locator("main .btns .btn.alt").count():  # the final screen offers "change setup"
+                break
+            audit(page, "scores")
+            assert read_scoreboard(page) == [(n, str(scores[n])) for n in players], "between rounds the board lists every player in seat order"
+            go(page)  # next round
 
-        assert page.locator(".score strong").all_inner_texts() == [str(winners.count("Ada")), str(winners.count("Ben"))]  # draws score nothing
+        assert rnd == 3, f"a rounds entry of 1 should be raised to the minimum of three, but {rnd} rounds were played"
+        assert max(duel_counts.values()) - min(duel_counts.values()) <= 1, f"duels should be spread evenly: {duel_counts}"
+        assert len(pairs) == 3, "no pairing repeats in a short game"
+        ranked = sorted(players, key=lambda n: -scores[n])  # stable: ties keep seat order
+        assert read_scoreboard(page) == [(n, str(scores[n])) for n in ranked], "final board is ranked, ties in seat order"
+        top = [n for n in players if scores[n] == max(scores.values())]
+        heading = page.locator("main h2").text_content()
+        assert all(n in heading for n in top) and not any(n in heading for n in players if n not in top), f"final heading should name exactly {top}: {heading!r}"
         shot(page, "5-final")
         audit(page, "final")
         page.locator("main .btn.alt").tap()  # change setup
         assert page.locator("#app b").count() == 0, "player names must never be parsed as HTML"
-        assert page.locator("label input").nth(2).input_value() == "Cy<b>x"
+        assert [seats.nth(i).input_value() for i in range(4)] == players
 
         # Names are remembered on this device: a fresh load of the page offers them again.
         page.reload()
-        assert [page.locator("label input").nth(i).input_value() for i in range(3)] == ["Ada", "Ben", "Cy<b>x"], "names should be remembered"
+        assert [page.locator(".seat input").nth(i).input_value() for i in range(4)] == players, "names should be remembered"
+        assert page.locator(".seat input").count() == 4
 
         wide = browser.new_context(viewport={"width": 1100, "height": 900}).new_page()
         wide.goto(URL)
-        wide.locator("main .btn").click()
-        wide.locator("main .btn").click()
+        wide.locator("main .btn").last.click()
+        wide.locator("main .btn").last.click()
         word(wide, 0, 1).click()
         shot(wide, "6-wide-pick")
         assert wide.locator(".tab").first.is_hidden(), "column tabs are phone-only"
