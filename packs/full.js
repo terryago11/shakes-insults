@@ -2,7 +2,7 @@
 // This file IS the word bank: edit it by hand to adapt the game (regenerating overwrites it).
 InsultGame.registerPack({
   id: "full",
-  meta: { name: "Full list (145 adjectives, 82 nouns)", credit: "Words drawn from various sources.", license: "" },
+  meta: { name: "Full list (145 adjectives, 82 nouns)", credit: "Words drawn from various sources.", license: "Public domain" },
   prefix: "Thou",
   pools: {
     "adjectives": [

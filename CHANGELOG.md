@@ -2,6 +2,12 @@
 
 Newest first.
 
+## 0.2.1 — 2026-10-04
+
+- Word lists declared public domain (per the owner); `meta.license` set in both packs, README and SECURITY.md updated.
+- The `short` list's 66 rows confirmed canonical (the older PDF with 64 rows is stale).
+- Security docs prepared for a public repository: SECURITY.md wording, and a new `docs/publishing.md` checklist (private vulnerability reporting, secret scanning, branch protection, git-history check).
+
 ## 0.2.0 — 2026-10-04
 
 Phone-first rebuild in an early-printing broadside style.

@@ -62,9 +62,10 @@ curated spreadsheet in `reference/` (needs `pip install openpyxl`).
 
 - **Built by Natan Skop (Theater in the Rough).**
   The code is released under the [MIT License](./LICENSE).
-- **The words** come from various sources. The curated spreadsheet and PDF this game was built
-  from credit "Theater in the Rough | Insults Game" for the game sheet but name no sources for the
-  individual words. The MIT license covers the code, not the word lists.
+- **The words** come from various sources and are in the public domain (per the project owner).
+  The curated spreadsheet and PDF this game was built from credit "Theater in the Rough | Insults
+  Game" for the game sheet but name no sources for the individual words. The MIT license covers
+  the code; the word lists need no license.
 - **Fonts**: IM Fell English, IM Fell English SC and IM Fell Double Pica, bundled under the SIL
   Open Font License (`fonts/OFL.txt`, `fonts/README.md`).
 

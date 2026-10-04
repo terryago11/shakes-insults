@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Insult Duel is a small open-source game. Security fixes are applied to the `main` branch only.
+Insult Duel is a small open-source game, developed in a public repository. Security fixes are applied to the `main` branch only.
 
 | Version | Supported |
 |---------|-----------|
@@ -13,7 +13,7 @@ Insult Duel is a small open-source game. Security fixes are applied to the `main
 
 Please **do not open a public GitHub issue** with details of a vulnerability.
 
-Report it privately using GitHub's [private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing/privately-reporting-a-security-vulnerability) (the "Report a vulnerability" button on this repository's Security tab). If that option is not available, open a public issue that says only that you have a security concern, with no details, and ask for a private way to share them.
+Report it privately using GitHub's [private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing/privately-reporting-a-security-vulnerability) (the "Report a vulnerability" button on this repository's Security tab). If that button is not there, open a public issue that says only that you have a security concern, with no details, and ask for a private way to share them. Because this repository is public, never include secrets, credentials or exploit details in a public issue, pull request or comment.
 
 Please include:
 - A description of the vulnerability
@@ -53,4 +53,8 @@ The shipped game has **no runtime dependencies**. Development tooling is limited
 
 ## License
 
-The code is licensed under the [MIT License](./LICENSE). The bundled fonts are under the SIL Open Font License (`fonts/OFL.txt`). The word lists are drawn from various sources; see the README.
+The code is licensed under the [MIT License](./LICENSE). The bundled fonts are under the SIL Open Font License (`fonts/OFL.txt`). The word lists are drawn from various sources and are in the public domain; see the README.
+
+## Maintainers
+
+Repository settings that back this policy (private vulnerability reporting, secret scanning, branch protection) and a pre-publication checklist are in [docs/publishing.md](./docs/publishing.md).

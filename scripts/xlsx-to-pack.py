@@ -5,7 +5,7 @@ Usage:  python3 scripts/xlsx-to-pack.py path/to/Insults.xlsx
 Needs:  pip install openpyxl
 
 Sheet "full":  column A = every adjective, column D = every noun.
-Sheet "short": three static columns (Column 1 / 2 / 3), header in row 1.
+Sheet "short": three static columns (Column 1 / 2 / 3), header in row 1; all 66 rows are canonical.
 Regenerating overwrites the pack files, so keep hand edits in the spreadsheet.
 """
 import json
@@ -15,7 +15,8 @@ from pathlib import Path
 import openpyxl
 
 
-WORDS_CREDIT = "Words drawn from various sources."  # the source spreadsheet and PDF credit no word sources
+WORDS_CREDIT = "Words drawn from various sources."  # the source spreadsheet and PDF name no word sources
+WORDS_LICENSE = "Public domain"  # per the project owner
 
 
 def js_list(words, indent="      "):
@@ -31,7 +32,7 @@ def write_pack(path, pack_id, name, pools, columns):
         "// This file IS the word bank: edit it by hand to adapt the game (regenerating overwrites it).\n"
         "InsultGame.registerPack({\n"
         f"  id: {json.dumps(pack_id)},\n"
-        f'  meta: {{ name: {json.dumps(name)}, credit: {json.dumps(WORDS_CREDIT)}, license: "" }},\n'
+        f'  meta: {{ name: {json.dumps(name)}, credit: {json.dumps(WORDS_CREDIT)}, license: {json.dumps(WORDS_LICENSE)} }},\n'
         '  prefix: "Thou",\n'
         "  pools: {\n" + body + ",\n  },\n"
         f"  columns: {json.dumps(columns)},\n"

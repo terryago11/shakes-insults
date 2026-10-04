@@ -77,4 +77,4 @@ InsultGame.registerPack({
 
 ## Git
 
-Default branch is `main`. The curated spreadsheet is committed at `reference/Insults.xlsx`. It is the reference copy of the word list; the pack files in `packs/` are what the game actually reads. Words come from various sources (the spreadsheet and PDF name none), so the MIT license covers the code only.
+Default branch is `main`. The curated spreadsheet is committed at `reference/Insults.xlsx`. It is the reference copy of the word list; the pack files in `packs/` are what the game actually reads. Words come from various sources and are in the public domain (per the owner), so the MIT license covers the code only. The `short` sheet's 66 rows are canonical (the owner's decision); an older printed PDF had 64.

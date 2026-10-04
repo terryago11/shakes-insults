@@ -15,4 +15,6 @@ _Persistent error log — append only, never delete._
 - **Mobile rebuild**: spent effort on a colour-blind-safe palette when the owner did not need it. Ask whether a constraint applies before optimizing for it. (Text contrast on the paper is still kept at 4.5:1 for legibility.)
 - **Mobile rebuild**: first README credit linked "Theater in the Rough" to this repo's URL; it is an organization name, not a repo. Do not invent links.
 - **Mobile rebuild**: a phone's default tap highlight (translucent blue) tinted the selected word teal over the red selection; set `-webkit-tap-highlight-color` to a paper-friendly colour.
+- **Publishing prep**: commits were authored with the owner's personal email (and carry claude.ai session URLs in trailers). Both become public with the repo. Decide whether to rewrite history to a noreply address before the first public push (see `docs/publishing.md`); it is far easier before publication than after.
+- **Resolved**: the `short` sheet's 66 rows are canonical (owner); the earlier "66 vs 64 rows" entries refer to a stale PDF.
 

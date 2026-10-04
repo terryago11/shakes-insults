@@ -7,8 +7,7 @@ Shipped work lives in [CHANGELOG.md](./CHANGELOG.md). Nothing below is committed
 - **Rotating judge** — each round a different player judges, so all three play (a change to `judge()`, `award` and the handoff flow in `src/app.js`).
 - **Tie option** — let the judge declare a round a draw (no point).
 - **Remember names and settings** — `localStorage`, wrapped in try/catch so the game still works when storage is blocked.
-- **Pack license** — `meta.license` is still blank for the shipped packs; the words come from various sources with no recorded licenses. Track down sources if the word lists are ever to be relicensed or redistributed separately.
-- **Spreadsheet vs PDF row mismatch** — the `short` sheet has 66 rows; the printed PDF has 64. Decide which is canonical.
+- **Publish the repo** — work through `docs/publishing.md` (security settings, history check) first.
 - **Static hosting** — publish via GitHub Pages (needs no build step).
 
 ## Medium
