@@ -4,6 +4,12 @@ Newest first.
 
 ## Unreleased
 
+- **Rotating players (3 to 6)**: setup takes a list of players (add and "strike out" seats, 3 to 6) instead of two duelists and a fixed judge, and the rounds menu is gone. The game is planned up front: every player duels the same number of times (`duelsPerPlayer`, 3, or 2 when players x 3 is odd or there are too few opponents), so 3 players = 3 rounds, 4 = 6, 5 = 5, 6 = 9. Each round two players duel and another judges; the matchup is shown when the device is handed over. Scores run over the whole game.
+- **Scoring**: a win is 2 points, a draw is 1 point for each duelist (the judge scores nothing); both are settings (`pointsForWin`, `pointsForDraw`). The final board is ranked and several players on the top score are reported as a tie naming them all.
+- **Shared names**: players who type the same name (ignoring case) become "Ada I", "Ada II".
+- **Planner**: `planRounds(players, duels)` in `src/logic.js` picks distinct pairs with level duel counts at every step and judges spread as evenly as possible (floor or ceiling). Property-tested for 3 to 10 players and every valid number of duels each. An earlier greedy version repeated pairings and was replaced before release.
+- **Spelling**: "Iudge", "vntil", "Vse" and "giue" are now "Judge", "until", "Use" and "give"; the other period spellings stay.
+- **Settings and text config**: `roundOptions` and the rounds field were removed; new `minPlayers`, `maxPlayers`, `duelsPerPlayer`, `pointsForWin`, `pointsForDraw`. `defaultNames` became `defaultName`; `setup.duelist1/2`, `setup.judge`, `setup.roundsOption` and `final.draw` were replaced by new keys. `parseSavedNames` takes a minimum and maximum count; `awardPoint` became `scoreRound`.
 - **Tie option**: the judge can call a round a draw ("A Draw. No Point"); nobody scores. `awardPoint(scores, null)` leaves the scores unchanged.
 - **Remembered names**: the three player names are kept in `localStorage` on the device and offered again on the next visit. Storage failures (blocked, private window) are ignored; saved data is validated by `parseSavedNames`. Turn off with `namesStorageKey: ""` in `config/settings.js`. SECURITY.md updated: the game no longer claims "no storage".
 - **CI**: `.github/workflows/test.yml` runs `npm test` on Node 20 and 22 for pushes to `main` and pull requests.

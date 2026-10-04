@@ -1,6 +1,6 @@
 # shakes-insults
 
-A three-player Shakespearean insult game for one shared phone (or any device). Two duelists each build an insult ("Thou ___ ___ ___!") by hand from the same word bank (shown to each in a different random order), say them aloud on a countdown, and the third player, the judge, picks the winner. Winner of each round gets a point. Primarily a fun toy; classroom use is a secondary goal. Built by Natan Skop (Theater in the Rough), MIT-licensed.
+A Shakespearean insult game for 3 to 6 players on one shared phone (or any device). Each round two duelists build an insult ("Thou ___ ___ ___!") by hand from the same word bank (shown to each in a different random order), say them aloud on a countdown, and a third player, the judge, picks the winner (or calls a draw). The duelists and judge rotate according to a plan made at the start of the game; a win is 2 points, a draw 1 point for each duelist, the judge scores nothing, and scores run over the whole game. Primarily a fun toy; classroom use is a secondary goal. Built by Natan Skop (Theater in the Rough), MIT-licensed.
 
 ## Dev Commands
 
@@ -18,7 +18,7 @@ Regenerate the packs from the curated spreadsheet: `pip install openpyxl && pyth
 
 ## Stack
 
-Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dependencies, no backend, no network requests. The only storage is the three player names in `localStorage` (wrapped in try/catch, validated by `parseSavedNames`; `namesStorageKey: ""` in `config/settings.js` turns it off). Local play on one device only; remote play is deliberately out of scope for now.
+Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dependencies, no backend, no network requests. The only storage is the player names in `localStorage` (wrapped in try/catch, validated by `parseSavedNames`; `namesStorageKey: ""` in `config/settings.js` turns it off). Local play on one device only; remote play is deliberately out of scope for now.
 
 ## Key Files
 
@@ -26,9 +26,9 @@ Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dep
 |------|---------|
 | `index.html` | Loads scripts in order: `src/logic.js`, `config/*.js`, `packs/*.js`, then `src/app.js`. Contains no player-facing text |
 | `config/text.js` | **All player-facing text** (titles, buttons, flavour copy, countdown, ordinals, footer). Edited to re-skin or translate |
-| `config/settings.js` | Round choices, default rounds, countdown timing, name length, names storage key |
+| `config/settings.js` | Player limits, duels per player, points for a win and a draw, countdown timing, name length, names storage key |
 | `packs/*.js` | **The word banks.** One file per pack, each calls `InsultGame.registerPack({...})` |
-| `src/logic.js` | Pure game logic (`shuffle`, `registerPack`, `resolveColumns`, `buildInsult`, `validatePicks`, `awardPoint` (null = draw), `parseSavedNames`, `leader`) and text helpers (`makeT`, `nth`). No DOM. Exposed as `window.InsultGame` and `module.exports` |
+| `src/logic.js` | Pure game logic (`shuffle`, `registerPack`, `resolveColumns`, `buildInsult`, `validatePicks`, `scoreRound` (winner index, or null = draw), `parseSavedNames`, `disambiguate`, `leaders`/`leader`, `duelsEach`, `planRounds`) and text helpers (`makeT`, `nth`). No DOM. Exposed as `window.InsultGame` and `module.exports` |
 | `src/app.js` | UI: screen-by-screen state machine (setup → handoff → pick → ready → countdown → reveal → scores/final) |
 | `style.css` | All styling, mobile-first; no `content:` strings |
 | `fonts/` | Bundled IM Fell woff2 files + `OFL.txt` (SIL OFL) + provenance note |
@@ -66,6 +66,8 @@ InsultGame.registerPack({
 - **Fonts are bundled** in `fonts/` (no CDN, no network requests). Keep `OFL.txt` with them.
 - **Pure logic in `logic.js`, DOM in `app.js`.** New rules go in `logic.js` with a test.
 - **Render with `textContent` via `h()`.** Player names and pack words are never interpreted as HTML. Do not use `innerHTML`. `h()` flattens nested arrays fully; keep it that way.
+- **Who duels and who judges comes from `planRounds` in `logic.js`.** It is a pure function with property tests: every player duels exactly `duelsEach(players, settings.duelsPerPlayer)` times (3 players 2, 4 players 3, 5 players 2, 6 players 3), no pair meets twice, duel counts stay level during the game, the judge is never a duelist, and judge counts differ by at most one. The number of rounds is therefore fixed by the player count; there is no rounds setting. The UI only reads `state.plan`; do not pick duelists or judges in `app.js`.
+- **Shared names are numbered, not rejected.** `disambiguate` turns "Ada", "ada" into "Ada I", "ada II" (numerals from `text.romans`); the names as typed are what is remembered.
 - **Picks are secret until the countdown ends.** Each duelist's columns get an independent fresh shuffle every round, and there is no random-insult button. These are core rules, not defaults to tweak casually.
 - **`window.InsultGame`'s API in `logic.js` is what packs, config and tests rely on.** Keep it stable.
 - **Config and pack files are executable JS.** Treat them as trusted deployer-supplied code (see `SECURITY.md`).

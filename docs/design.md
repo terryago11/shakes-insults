@@ -22,8 +22,9 @@ how early printed sheets were actually put together.
    hand (☞), not a modern focus ring.
 
 8. **Old-style copy.** Explanatory text capitalises Nouns and uses period spellings ("Slaunder",
-   "Columne", "Chuse", "Shew", "Iudge", "giue eare"). Kept light so a phone player can still read
-   it. These are the author's choices from general knowledge of the period, not claims taken from
+   "Columne", "Chuse", "Shew", "eare"). Kept light so a phone player can still read
+   it. The i/j and u/v swaps of the period ("Iudge", "vntil", "giue") are deliberately not used:
+   they are too far for a modern eye (owner's decision). These are the author's choices from general knowledge of the period, not claims taken from
    the Britannica article, which does not discuss orthography. Pack names and the credit lines
    are left in plain modern English on purpose (attribution should be unambiguous).
 

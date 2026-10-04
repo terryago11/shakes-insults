@@ -14,11 +14,12 @@ InsultGame.text = {
   blank: "____",
 
   // Lists are indexed by number: ordinals[0] is "First".
-  romans: ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"],
-  ordinals: ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth"],
-  cardinals: ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"],
+  romans: ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"], // one per word column
+  ordinals: ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"],
+  cardinals: ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"],
 
-  defaultNames: ["Player 1", "Player 2", "Player 3"],
+  // Name offered for a seat that has been left blank ({n} is the seat number).
+  defaultName: "Player {n}",
 
   footer: {
     imprint: "Imprinted at the Signe of the Three Columnes. Sold without Warrantie against wounded Feelings.",
@@ -26,15 +27,16 @@ InsultGame.text = {
   },
 
   setup: {
-    kicker: "A Broadside for three Players",
+    kicker: "A Broadside for three to six Players",
     titleSmall: "A most Notable & Villanous",
     titleLarge: "Contention of Insults",
-    lede: "Two Duellists shall trade Slaunders, each built by Hand from the Three Columnes; a Third shall sit as Iudge, and say whose Tongue hath the sharper Edge.",
-    duelist1: "The First Duellist",
-    duelist2: "The Second Duellist",
-    judge: "The Iudge",
-    rounds: "Length of the Contention",
-    roundsOption: "{n} Rounds",
+    lede: "Three to six Players shall take Turns. Two Duel, trading Slaunders built by Hand from the Three Columnes; another sits as Judge, and saith whose Tongue hath the sharper Edge. Every Player duelleth every other once, the Seats change every Round, and the Points are kept to the End.",
+    player: "The {ordinal} Player",
+    addPlayer: "Adde a Player",
+    remove: "Strike out",
+    removeLabel: "Strike out {name}",
+    // Two players who typed the same name become "Ada I" and "Ada II" ({roman} is the numeral).
+    duplicate: "{name} {roman}",
     pack: "The Word Banke",
     start: "Begin the Contention",
   },
@@ -43,7 +45,8 @@ InsultGame.text = {
 
   handoff: {
     title: "Passe the Device to {name}",
-    lede: "Let no Man peepe. Thy Chusing is secret vntil the Count be done.",
+    versus: "{a} against {b}, with {judge} as Judge.",
+    lede: "Let no Man peepe. Thy Chusing is secret until the Count be done.",
     button: "I am {name}. Shew my Columnes",
   },
 
@@ -53,12 +56,12 @@ InsultGame.text = {
     column: "¶ {roman}. The {ordinal} Columne",
     tabLabel: "Go to Columne {roman}",
     imprint: "Imprint it!",
-    duplicate: "Vse a different Word in each Columne.",
+    duplicate: "Use a different Word in each Columne.",
   },
 
   ready: {
     title: "Both Slaunders are imprinted",
-    lede: "Duellists, face one another. Iudge {judge}, giue eare.",
+    lede: "Duellists, face one another. Judge {judge}, give eare.",
     button: "Begin the Count",
   },
 
@@ -69,18 +72,20 @@ InsultGame.text = {
     title: "Speake it aloud!",
     ask: "{judge}, whose Tongue hath the sharper Edge?",
     wins: "{name} wins",
-    draw: "A Draw. No Point",
+    draw: "A Draw",
   },
 
   scores: {
-    title: "A Point to {name}",
-    draw: "A Draw. No Point is given",
+    // {points} is a number word from `cardinals` ("Two"); the plural "Points" does not adapt if you change the scoring.
+    title: "{points} Points to {name}",
+    draw: "A Draw. {points} Point to each Duellist",
     next: "The next Round",
   },
 
   final: {
     winner: "{name} winneth the Contention!",
-    draw: "A Draw. Both Tongues are equally vile.",
+    tie: "A Tie between {names}. Their Tongues are equally vile.",
+    nameSeparator: ", ",
     again: "Play againe",
     change: "Alter the Setup",
   },

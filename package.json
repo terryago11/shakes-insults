@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "author": "Natan Skop (Theater in the Rough)",
-  "description": "Three-player Shakespearean insult duel: two duelists, one judge.",
+  "description": "Shakespearean insult duel for three to six players: two duelists and a judge each round, rotating.",
   "scripts": {
     "start": "python3 -m http.server 8000",
     "test": "node --test",
