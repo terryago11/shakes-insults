@@ -8,3 +8,11 @@ _Persistent error log — append only, never delete._
 - **Initial build**: the curated spreadsheet's `short` sheet has 66 rows but the printed PDF has 64 (missing `clapper-clawed / artless / popinjay` and `tardy-gaited / errant / mammet`). Verify the source of truth before regenerating packs.
 - **Initial build**: in the spreadsheet's `full` sheet "Adjective 1/2" are formula-derived pairings of one alphabetical list, and there are 145 adjectives (odd). Treat adjectives as one pool, not two columns of data.
 - **Initial build**: the Excel-to-pack script needs `openpyxl`, which is not installed by default (`pip install openpyxl`).
+- **Mobile rebuild**: `h()` only flattened one array level (`kids.flat()`), so the insult (`["Thou ", [spans], "!"]`) rendered as `[object HTMLSpanElement]`. Use `flat(Infinity)` and return flat arrays; browser tests must assert real text, not just that screens render.
+- **Mobile rebuild**: `cp .../fontsource-im-fell-english-*/LICENSE` matched two package dirs (`english` and `english-sc`), so the copy failed. Use exact paths when copying from globbed package folders.
+- **Mobile rebuild**: text-config lint scanned `app.js` comments (`t("some.key")` in a header comment) and `style.css` for `content:` (matching `justify-content:`). Strip comments before scanning and anchor the `content:` regex.
+- **Mobile rebuild**: tuned layout "fixes" (no-wrap headings, resized drop cap) for things that were merely awkward. Awkward is acceptable here; only fix real defects (overlap, unreadable, broken tap targets).
+- **Mobile rebuild**: spent effort on a colour-blind-safe palette when the owner did not need it. Ask whether a constraint applies before optimizing for it. (Text contrast on the paper is still kept at 4.5:1 for legibility.)
+- **Mobile rebuild**: first README credit linked "Theater in the Rough" to this repo's URL; it is an organization name, not a repo. Do not invent links.
+- **Mobile rebuild**: a phone's default tap highlight (translucent blue) tinted the selected word teal over the red selection; set `-webkit-tap-highlight-color` to a paper-friendly colour.
+

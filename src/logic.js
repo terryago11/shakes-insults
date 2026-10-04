@@ -38,14 +38,17 @@
     });
   }
 
+  // Plain-text form of an insult. The UI (insultNodes in app.js) builds the same shape with one
+  // coloured span per word, so keep the two in step; tests use this as the reference.
   function buildInsult(prefix, words) {
     return `${prefix} ${words.join(" ")}!`;
   }
 
-  // Returns an error message, or null if the picks form a valid insult.
+  // Returns "incomplete", "duplicate", or null when the picks form a valid insult.
+  // (Codes, not sentences: the wording lives in config/text.js.)
   function validatePicks(words) {
-    if (words.some((w) => !w)) return "Pick a word from every column.";
-    if (new Set(words).size !== words.length) return "Use a different word in each column.";
+    if (words.some((w) => !w)) return "incomplete";
+    if (new Set(words).size !== words.length) return "duplicate";
     return null;
   }
 
@@ -63,7 +66,28 @@
     return leaders.length === 1 ? leaders[0] : null;
   }
 
-  const api = { packs, shuffle, wordText, registerPack, resolveColumns, buildInsult, validatePicks, awardPoint, leader };
+  // --- text config helpers -------------------------------------------------
+
+  // Fills {placeholders}; unknown placeholders are left visible so mistakes are noticed.
+  function format(template, vars = {}) {
+    return template.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
+  }
+
+  // Looks up "setup.title" style keys. A missing key throws, so typos fail loudly.
+  function makeT(text) {
+    return function t(key, vars) {
+      const value = key.split(".").reduce((o, k) => (o == null ? undefined : o[k]), text);
+      if (value === undefined) throw new Error(`Missing text key: ${key}`);
+      return typeof value === "string" ? format(value, vars) : value;
+    };
+  }
+
+  // 1-based pick from a list, falling back to the number itself (e.g. a 10th round).
+  function nth(list, n) {
+    return list[n - 1] !== undefined ? list[n - 1] : String(n);
+  }
+
+  const api = { packs, shuffle, wordText, registerPack, resolveColumns, buildInsult, validatePicks, awardPoint, leader, makeT, nth };
   root.InsultGame = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);

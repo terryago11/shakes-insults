@@ -7,7 +7,7 @@ Shipped work lives in [CHANGELOG.md](./CHANGELOG.md). Nothing below is committed
 - **Rotating judge** — each round a different player judges, so all three play (a change to `judge()`, `award` and the handoff flow in `src/app.js`).
 - **Tie option** — let the judge declare a round a draw (no point).
 - **Remember names and settings** — `localStorage`, wrapped in try/catch so the game still works when storage is blocked.
-- **Pack credit/license in the footer** — fill in `meta.credit` / `meta.license` for the shipped packs (needs the right wording from the curator) and show both.
+- **Pack license** — `meta.license` is still blank for the shipped packs; the words come from various sources with no recorded licenses. Track down sources if the word lists are ever to be relicensed or redistributed separately.
 - **Spreadsheet vs PDF row mismatch** — the `short` sheet has 66 rows; the printed PDF has 64. Decide which is canonical.
 - **Static hosting** — publish via GitHub Pages (needs no build step).
 
@@ -18,6 +18,8 @@ Shipped work lives in [CHANGELOG.md](./CHANGELOG.md). Nothing below is committed
 - **Word-pack switcher in the UI** for more than the two shipped packs (the dropdown already supports any registered pack).
 - **Accessibility pass** — screen-reader announcements for the countdown and reveal, larger tap targets, keyboard shortcuts for picking.
 - **Sound / haptics** for the countdown.
+- **Playable on real phones** — so far only tested in an emulated phone viewport; try real devices (notably iOS Safari: sticky headings, `color-mix`, the fixed bar and the on-screen keyboard).
+- **Per-pack column colours** — let a pack choose its own three (or more) hand colours instead of the CSS defaults.
 
 ## Large / probably not
 

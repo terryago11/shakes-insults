@@ -1,11 +1,15 @@
-// UI: a small screen-by-screen state machine. All text goes through textContent (via h())
-// so player names and word-bank entries are never interpreted as HTML.
+// UI: a small screen-by-screen state machine. Every player-facing string comes from
+// config/text.js via t("some.key") (use literal keys: a test checks them against the config).
+// All text goes through textContent (via h()) so names and words are never read as HTML.
 (function () {
   "use strict";
 
   const G = window.InsultGame;
+  const t = G.makeT(G.text);
+  const S = G.settings;
   const app = document.getElementById("app");
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const calm = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function h(tag, props, ...kids) {
     const el = document.createElement(tag);
@@ -15,7 +19,7 @@
       else if (v === true) el.setAttribute(k, "");
       else if (v !== false && v != null) el.setAttribute(k, v);
     }
-    for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid);
+    for (const kid of kids.flat(Infinity)) if (kid != null && kid !== false) el.append(kid);
     return el;
   }
 
@@ -28,60 +32,80 @@
   let state = null;
   const duelist = (i) => state.names[i];
   const judge = () => state.names[2];
+  const rule = () => h("hr", { class: "rule" });
+  const lede = (text) => h("p", { class: "lede" }, text);
+  const btn = (label, onclick, cls) => h("button", { type: "button", class: "btn" + (cls ? " " + cls : ""), onclick }, label);
+
+  function roundKicker() {
+    return h(
+      "p",
+      { class: "kicker" },
+      t("round", { ordinal: G.nth(t("ordinals"), state.round), total: G.nth(t("cardinals"), state.rounds) })
+    );
+  }
+
+  // Each column has its own hand colour (c1, c2, c3 = --c1..--c3 in style.css; cycles if a pack
+  // has more than three columns).
+  const hue = (i) => `c${(i % 3) + 1}`;
+
+  // "Thou" + chosen words (hand-coloured red) + "!". Unchosen columns show the blank marker.
+  function insultNodes(prefix, words) {
+    const spans = words.flatMap((w, i) => [i ? " " : "", h("span", { class: w ? `w ${hue(i)}` : "blank" }, w || t("blank"))]);
+    return [`${prefix} `, ...spans, "!"];
+  }
 
   function screenSetup(prev) {
     const packIds = Object.keys(G.packs);
-    const defaults = prev ? prev.names : ["Player 1", "Player 2", "Player 3"];
-    const nameInputs = defaults.map((n, i) =>
-      h("input", { type: "text", value: n, maxlength: 24, "aria-label": `Name ${i + 1}`, class: "name" })
-    );
+    const defaults = prev ? prev.names : t("defaultNames");
+    const nameInputs = defaults.map((n) => h("input", { type: "text", value: n, maxlength: 24, autocomplete: "off" }));
     const roundsSel = h(
       "select",
-      { "aria-label": "Rounds" },
-      [3, 5, 7, 9].map((n) => h("option", { value: n, selected: n === (prev ? prev.rounds : 5) }, `${n} rounds`))
+      {},
+      S.roundOptions.map((n) =>
+        h("option", { value: n, selected: n === (prev ? prev.rounds : S.defaultRounds) }, t("setup.roundsOption", { n }))
+      )
     );
     const packSel = h(
       "select",
-      { "aria-label": "Word pack" },
+      {},
       packIds.map((id) => h("option", { value: id, selected: prev && prev.packId === id }, G.packs[id].meta.name))
     );
 
     show(
-      h("h2", {}, "Set the stage"),
-      h("p", { class: "muted" }, "Two duelists trade insults. The third player judges."),
-      h("label", {}, "Duelist 1", nameInputs[0]),
-      h("label", {}, "Duelist 2", nameInputs[1]),
-      h("label", {}, "Judge", nameInputs[2]),
-      h("label", {}, "Length", roundsSel),
-      packIds.length > 1 ? h("label", {}, "Word pack", packSel) : null,
+      h("p", { class: "kicker" }, t("setup.kicker")),
+      h("h1", { class: "title" }, h("span", { class: "t-sm" }, t("setup.titleSmall")), h("span", { class: "t-lg" }, t("setup.titleLarge"))),
+      rule(),
+      lede(t("setup.lede")),
       h(
-        "button",
-        {
-          class: "primary",
-          onclick: () => {
-            const names = nameInputs.map((el, i) => el.value.trim() || defaults[i]);
-            state = {
-              names,
-              rounds: Number(roundsSel.value),
-              packId: packSel.value || packIds[0],
-              round: 1,
-              scores: [0, 0],
-              picks: [null, null],
-            };
-            screenHandoff(0);
-          },
-        },
-        "Start the duel"
-      )
+        "div",
+        { class: "fields" },
+        h("label", {}, t("setup.duelist1"), nameInputs[0]),
+        h("label", {}, t("setup.duelist2"), nameInputs[1]),
+        h("label", {}, t("setup.judge"), nameInputs[2])
+      ),
+      h("label", {}, t("setup.rounds"), roundsSel),
+      packIds.length > 1 ? h("label", {}, t("setup.pack"), packSel) : null,
+      btn(t("setup.start"), () => {
+        state = {
+          names: nameInputs.map((el, i) => el.value.trim() || defaults[i]),
+          rounds: Number(roundsSel.value),
+          packId: packSel.value || packIds[0],
+          round: 1,
+          scores: [0, 0],
+          picks: [null, null],
+        };
+        screenHandoff(0);
+      })
     );
   }
 
   function screenHandoff(i) {
     show(
-      h("p", { class: "muted" }, `Round ${state.round} of ${state.rounds}`),
-      h("h2", {}, `Pass the device to ${duelist(i)}`),
-      h("p", { class: "muted" }, "No peeking. Your insult stays secret until the countdown."),
-      h("button", { class: "primary", onclick: () => screenPick(i) }, `I'm ${duelist(i)}. Show my words`)
+      roundKicker(),
+      h("h2", {}, t("handoff.title", { name: duelist(i) })),
+      rule(),
+      lede(t("handoff.lede")),
+      btn(t("handoff.button", { name: duelist(i) }), () => screenPick(i), "block")
     );
   }
 
@@ -91,19 +115,36 @@
     const columns = G.resolveColumns(pack).map((words) => G.shuffle(words));
     const chosen = columns.map(() => null);
     const buttons = columns.map(() => []);
+    const sections = [];
+    const tabs = [];
 
     const preview = h("p", { class: "preview", "aria-live": "polite" });
-    const error = h("p", { class: "error", "aria-live": "polite" });
-    const lock = h("button", { class: "primary", disabled: true, onclick: onLock }, "Lock it in");
+    const problem = h("p", { class: "problem", "aria-live": "polite" });
+    const lock = btn(t("pick.imprint"), onLock); // refresh() disables it until every column is chosen
+
+    function jump(c) {
+      sections[c].scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "start" });
+    }
+
+    function choose(c, word) {
+      const firstPick = chosen[c] === null;
+      chosen[c] = word;
+      refresh();
+      // Columns are stacked on a phone, where the column tabs are visible (the CSS hides them on
+      // wide screens): after a first pick, bring the next empty column up.
+      const next = chosen.findIndex((w, k) => k > c && w === null);
+      if (firstPick && next !== -1 && tabs[0].offsetParent !== null) jump(next);
+    }
 
     function refresh() {
-      columns.forEach((words, c) =>
-        words.forEach((w, k) => buttons[c][k].setAttribute("aria-pressed", String(chosen[c] === w)))
-      );
-      preview.textContent = G.buildInsult(pack.prefix, chosen.map((w) => w || "____"));
-      const problem = G.validatePicks(chosen);
-      error.textContent = chosen.every(Boolean) && problem ? problem : "";
-      lock.disabled = Boolean(problem);
+      columns.forEach((words, c) => {
+        words.forEach((w, k) => buttons[c][k].setAttribute("aria-pressed", String(chosen[c] === w)));
+        tabs[c].classList.toggle("done", chosen[c] !== null);
+      });
+      preview.replaceChildren(...insultNodes(pack.prefix, chosen));
+      const issue = G.validatePicks(chosen);
+      problem.textContent = issue === "duplicate" ? t("pick.duplicate") : "";
+      lock.disabled = issue !== null;
     }
 
     function onLock() {
@@ -117,36 +158,57 @@
         "div",
         { class: "words" },
         words.map((w, k) => {
-          const b = h("button", { class: "word", "aria-pressed": "false", onclick: () => { chosen[c] = w; refresh(); } }, w);
+          const b = h(
+            "button",
+            { type: "button", class: "word", "aria-pressed": "false", onclick: () => choose(c, w) },
+            h("span", { class: "mark", "aria-hidden": "true" }, t("marker")),
+            h("span", { class: "txt" }, w)
+          );
           buttons[c][k] = b;
           return b;
         })
       );
-      return h("section", { class: "col" }, h("h3", {}, `Column ${c + 1}`), list);
+      const roman = G.nth(t("romans"), c + 1);
+      const heading = h("h3", {}, t("pick.column", { roman, ordinal: G.nth(t("ordinals"), c + 1) }));
+      sections[c] = h("section", { class: `col ${hue(c)}` }, heading, list);
+      tabs[c] = h(
+        "button",
+        { type: "button", class: `tab ${hue(c)}`, "aria-label": t("pick.tabLabel", { roman }), onclick: () => jump(c) },
+        roman
+      );
+      return sections[c];
     });
 
     show(
-      h("h2", {}, `${duelist(i)}, build your insult`),
-      h("div", { class: "columns" }, colEls),
-      h("div", { class: "sticky" }, preview, error, lock)
+      roundKicker(),
+      h("h2", {}, t("pick.title", { name: duelist(i) })),
+      lede(t("pick.lede")),
+      h("div", { class: "picker" }, colEls),
+      h("div", { class: "bar-space", "aria-hidden": "true" }), // keeps the last row clear of the fixed bar
+      h("div", { class: "bar" }, preview, problem, h("div", { class: "controls", style: `--n:${columns.length}` }, tabs, lock))
     );
     refresh();
   }
 
   function screenReady() {
     show(
-      h("h2", {}, "Both insults are locked in"),
-      h("p", { class: "muted" }, `${duelist(0)} and ${duelist(1)}, face each other. ${judge()}, get ready to judge.`),
-      h("button", { class: "primary", onclick: runCountdown }, "3 · 2 · 1")
+      roundKicker(),
+      h("h2", {}, t("ready.title")),
+      rule(),
+      lede(t("ready.lede", { judge: judge() })),
+      btn(t("ready.button"), runCountdown, "block")
     );
   }
 
   async function runCountdown() {
+    const labels = t("countdown");
     const big = h("div", { class: "countdown", "aria-live": "assertive" });
     show(big);
-    for (const label of ["3", "2", "1", "GO!"]) {
-      big.textContent = label;
-      await sleep(label === "GO!" ? 500 : 800);
+    for (let n = 0; n < labels.length; n++) {
+      const last = n === labels.length - 1;
+      big.textContent = labels[n];
+      big.classList.toggle("go", last);
+      await sleep(last ? S.countdownLastMs : S.countdownStepMs);
     }
     screenReveal();
   }
@@ -154,12 +216,13 @@
   function screenReveal() {
     const pack = G.packs[state.packId];
     const card = (i) =>
-      h("div", { class: "card" }, h("h3", {}, duelist(i)), h("p", { class: "insult" }, G.buildInsult(pack.prefix, state.picks[i])));
+      h("div", { class: "card" }, h("h3", {}, duelist(i)), h("p", { class: "insult" }, insultNodes(pack.prefix, state.picks[i])));
     show(
-      h("h2", {}, "Say it out loud!"),
+      roundKicker(),
+      h("h2", {}, t("reveal.title")),
       h("div", { class: "cards" }, card(0), card(1)),
-      h("p", { class: "muted" }, `${judge()}, who won the round?`),
-      h("div", { class: "row" }, [0, 1].map((i) => h("button", { class: "primary", onclick: () => award(i) }, `${duelist(i)} wins`)))
+      h("p", { class: "ask" }, t("reveal.ask", { judge: judge() })),
+      h("div", { class: "btns" }, [0, 1].map((i) => btn(t("reveal.wins", { name: duelist(i) }), () => award(i), "block")))
     );
   }
 
@@ -179,35 +242,42 @@
 
   function screenScores(winnerIdx) {
     show(
-      h("h2", {}, `Point to ${duelist(winnerIdx)}`),
+      roundKicker(),
+      h("h2", {}, t("scores.title", { name: duelist(winnerIdx) })),
       scoreboard(),
-      h(
-        "button",
-        {
-          class: "primary",
-          onclick: () => {
-            state.round += 1;
-            state.picks = [null, null];
-            screenHandoff(0);
-          },
-        },
-        "Next round"
-      )
+      btn(t("scores.next"), () => {
+        state.round += 1;
+        state.picks = [null, null];
+        screenHandoff(0);
+      }, "block")
     );
   }
 
   function screenFinal() {
     const lead = G.leader(state.scores);
     show(
-      h("h2", {}, lead === null ? "A draw. Both tongues are equally vile." : `${duelist(lead)} wins the duel!`),
+      h("h2", {}, lead === null ? t("final.draw") : t("final.winner", { name: duelist(lead) })),
       scoreboard(),
-      h("div", { class: "row" },
-        h("button", { class: "primary", onclick: () => { state = { ...state, round: 1, scores: [0, 0], picks: [null, null] }; screenHandoff(0); } }, "Play again"),
-        h("button", { onclick: () => screenSetup(state) }, "Change setup"))
+      h(
+        "div",
+        { class: "btns" },
+        btn(t("final.again"), () => {
+          state = { ...state, round: 1, scores: [0, 0], picks: [null, null] };
+          screenHandoff(0);
+        }),
+        btn(t("final.change"), () => screenSetup(state), "alt")
+      )
     );
   }
 
+  // Page chrome that has no markup of its own in index.html.
+  document.title = t("documentTitle");
+  document.documentElement.lang = t("lang");
+  document.getElementById("strip").textContent = t("ornaments").repeat(80);
+  document.getElementById("imprint").textContent = t("footer.imprint");
+  document.getElementById("builtby").textContent = t("footer.builtBy");
   const credit = Object.values(G.packs).map((p) => p.meta.credit).filter(Boolean)[0];
-  if (credit) document.getElementById("credit").textContent = credit;
+  document.getElementById("credit").textContent = credit || "";
+
   screenSetup(null);
 })();

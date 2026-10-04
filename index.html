@@ -1,19 +1,31 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Shakespearean Insult Duel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#e6d6ac">
+  <title></title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header><h1>Insult Duel</h1></header>
-  <main id="app"></main>
-  <footer id="credit"></footer>
+  <!-- No player-facing text lives in this file: see config/text.js. The page title, language,
+       ornament strip and footer are filled in by src/app.js. -->
+  <div class="sheet">
+    <div class="strip" id="strip" aria-hidden="true"></div>
+    <main id="app"></main>
+    <footer>
+      <p id="imprint"></p>
+      <p id="builtby"></p>
+      <p id="credit"></p>
+    </footer>
+  </div>
 
-  <!-- Game logic first, then word packs, then the UI. Plain scripts (not modules) so
-       index.html also works when double-clicked from disk. -->
+  <!-- Order matters: game logic, then config, then word packs, then the UI. Plain scripts (not
+       modules) so index.html also works when double-clicked from disk. -->
   <script src="src/logic.js"></script>
+
+  <script src="config/text.js"></script>
+  <script src="config/settings.js"></script>
 
   <!-- WORD BANKS: add, remove or swap pack files here. See README.md. -->
   <script src="packs/short.js"></script>

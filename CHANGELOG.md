@@ -2,9 +2,18 @@
 
 Newest first.
 
-## Unreleased
+## 0.2.0 — 2026-10-04
 
-- Added the curated word-list spreadsheet as `reference/Insults.xlsx`.
+Phone-first rebuild in an early-printing broadside style.
+
+- **Look**: dense, deliberately untidy broadside layout (tight leading, narrow margins, heavy/light rules, unequal columns, a red hand-coloured drop cap off-register from its printed box, a strip of printers' marks, a title-page structure). IM Fell fonts bundled locally in `fonts/` (SIL OFL), so the game stays offline and makes no network requests.
+- **Mobile first**: columns stack on a phone and the page scrolls; sticky column headings; every tap target at least 44px tall; a fixed bottom bar with the live insult, column tabs (I, II, III) and the imprint button; picking in a column brings the next empty column up. Wide screens get three unequal columns.
+- **Three column colours** (red, blue, green): column headings, tabs, picked words and the insult on the reveal screen are coloured by column.
+- **Old-style copy**: explanatory text uses capitalised Nouns and period spellings ("Slaunder", "Columne", "Chuse", "Shew", "Iudge"); it lives entirely in `config/text.js`, so modern wording is a config edit. The browser test finds buttons structurally so re-texting cannot break it.
+- **All text is configurable**: every player-facing string moved to `config/text.js` (countdown, ordinals, buttons, flavour copy, footer, page title and language); game settings to `config/settings.js`. Tests fail on missing, unused, or hard-coded text.
+- **Credits and licensing**: MIT `LICENSE` (Natan Skop, Theater in the Rough), `SECURITY.md`, built-by line and "words drawn from various sources" shown in the footer, README credits section. Added the curated word-list spreadsheet as `reference/Insults.xlsx`.
+- **Tests**: validatePicks now returns codes (wording lives in the text config); new optional browser smoke test (`npm run test:e2e`) plays a full game on a phone-sized screen and checks text, secrecy of picks, overflow, tap-target size, fonts, colours and that no request leaves the local files.
+- **Fixed** before release: insults rendered as `[object HTMLSpanElement]` because `h()` only flattened one array level.
 
 ## 0.1.0 — 2026-10-04
 

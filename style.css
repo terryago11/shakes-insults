@@ -1,75 +1,195 @@
+/* Mobile first: the base rules are the phone layout; min-width queries add the wide layout.
+   Early-printing look, deliberately dense: tight leading, narrow margins, heavy and light rules,
+   unequal columns, hand-coloured red slightly off-register. No player-facing text belongs here
+   (see config/text.js), so no `content:` strings. */
+
+@font-face { font-family: "IM Fell English"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("fonts/im-fell-english-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "IM Fell English"; font-style: italic; font-weight: 400; font-display: swap;
+  src: url("fonts/im-fell-english-latin-400-italic.woff2") format("woff2"); }
+@font-face { font-family: "IM Fell English SC"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("fonts/im-fell-english-sc-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "IM Fell Double Pica"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("fonts/im-fell-double-pica-latin-400-normal.woff2") format("woff2"); }
+
 :root {
-  --bg: #f6f0e4;
-  --fg: #2a2118;
-  --muted: #6b5d4d;
-  --card: #fffaf0;
-  --line: #d8ccb4;
-  --accent: #7a1f2b;
-  --accent-fg: #fff;
-  --pick: #f0d9a8;
+  color-scheme: light; /* the aged-paper look is the design; no dark variant */
+  --paper: #e6d6ac;
+  --paper-dark: #d8c593;
+  --ink: #231810;
+  --ink-soft: rgba(35, 24, 16, 0.55);
+  --ghost: rgba(35, 24, 16, 0.85); /* the black plate, printed slightly off-register */
+  --red: #a63020;
+  --blue: #26469a;
+  --green: #2a6336;
+  /* hand colour for each column (cycles if a pack has more than three columns) */
+  --c1: var(--red);
+  --c2: var(--blue);
+  --c3: var(--green);
+  --serif: "IM Fell English", Georgia, "Times New Roman", serif;
+  --caps: "IM Fell English SC", var(--serif);
+  --display: "IM Fell Double Pica", var(--serif);
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #1b1612;
-    --fg: #f0e6d2;
-    --muted: #a99a84;
-    --card: #261f19;
-    --line: #3d3329;
-    --accent: #c0485a;
-    --accent-fg: #fff;
-    --pick: #5a4521;
-  }
-}
+
 * { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font: 17px/1.5 Georgia, "Times New Roman", serif;
+  background: var(--paper);
+  color: var(--ink);
+  font: 18px/1.2 var(--serif);
+  text-shadow: 0 0 0.6px var(--ink); /* ink spread */
 }
-header, main, footer { max-width: 960px; margin: 0 auto; padding: 0 16px; }
-header h1 { margin: 16px 0 0; font-size: 1rem; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); }
-main { padding-bottom: 120px; }
-h2 { font-size: 1.6rem; margin: 20px 0 8px; }
-h3 { margin: 0 0 6px; font-size: 1rem; color: var(--muted); }
-.muted { color: var(--muted); }
-label { display: block; margin: 12px 0; color: var(--muted); font-size: .9rem; }
+
+/* The printed sheet: thick rule, thin rule inside it. */
+.sheet {
+  width: calc(100% - 16px);
+  max-width: 980px;
+  min-height: calc(100vh - 16px);
+  min-height: calc(100dvh - 16px);
+  margin: 8px auto;
+  padding: 10px 12px 12px;
+  border: 4px solid var(--ink);
+  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.strip { white-space: nowrap; overflow: hidden; font-size: 14px; letter-spacing: 4px; line-height: 1; }
+main { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.bar-space { height: 140px; }
+footer { font-size: 13px; line-height: 1.1; font-style: italic; text-align: justify; hyphens: auto; }
+footer p { margin: 0 0 4px; }
+
+.rule { border: 0; border-top: 4px double var(--ink); margin: 2px 0; width: 100%; }
+
+/* Type */
+.kicker { margin: 0; font-family: var(--caps); font-size: 0.9rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--red); text-shadow: 0.4px 0 0 var(--red); }
+.title { margin: 0; font-weight: 400; }
+.t-sm { display: block; font-family: var(--caps); font-size: 1rem; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.1; }
+.t-lg { display: block; font-family: var(--caps); font-size: clamp(2.3rem, 12vw, 4.2rem); text-transform: uppercase; line-height: 0.9; letter-spacing: -0.01em; }
+h2 { margin: 0; font-family: var(--caps); font-weight: 400; font-size: clamp(1.7rem, 8vw, 2.6rem); line-height: 0.95; text-transform: uppercase; }
+h3 { margin: 0; font-family: var(--caps); font-weight: 400; font-size: 1rem; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* Paragraph with a hand-coloured drop cap: red letter, printed black box, black plate ghosted
+   off-register. ::first-letter keeps the text whole for screen readers. */
+.lede { margin: 0; text-align: justify; hyphens: auto; font-size: 1.1rem; line-height: 1.15; }
+.lede::first-letter {
+  float: left;
+  font-family: var(--display);
+  font-size: 3.9rem;
+  line-height: 0.9;
+  color: var(--red);
+  background: var(--paper-dark);
+  border: 3px solid var(--ink);
+  padding: 0.04em 0.12em 0;
+  margin: 0.08em 0.5rem 0 0;
+  text-shadow: -3px 2px 0 var(--ghost);
+}
+
+/* Forms */
+label { display: block; font-family: var(--caps); font-size: 0.95rem; letter-spacing: 0.08em; text-transform: uppercase; }
 input, select {
-  display: block; width: 100%; margin-top: 4px; padding: 10px;
-  font: inherit; color: var(--fg); background: var(--card);
-  border: 1px solid var(--line); border-radius: 8px;
+  display: block; width: 100%; min-height: 44px; margin-top: 3px; padding: 8px 10px;
+  font: inherit; font-family: var(--serif); font-size: 1.15rem; color: var(--ink); text-shadow: inherit;
+  background: var(--paper-dark); border: 2px solid var(--ink); border-radius: 0;
 }
-button {
-  font: inherit; color: var(--fg); background: var(--card);
-  border: 1px solid var(--line); border-radius: 8px; padding: 10px 16px; cursor: pointer;
+.fields { display: grid; gap: 8px; }
+
+/* Buttons: black block with the red plate shifted off-register. */
+button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: rgba(166, 48, 32, 0.18); }
+.btn {
+  min-height: 44px; padding: 9px 18px 8px; margin: 4px 6px 8px 0;
+  background: var(--ink); color: var(--paper); text-shadow: none;
+  border: 3px double var(--paper); outline: 2px solid var(--ink);
+  font-family: var(--caps); font-size: 1.2rem; letter-spacing: 0.06em; text-transform: uppercase;
+  box-shadow: 5px 4px 0 var(--red);
 }
-button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); margin-top: 12px; }
-button:disabled { opacity: .45; cursor: not-allowed; }
-.row { display: flex; gap: 12px; flex-wrap: wrap; }
-.row button { flex: 1; }
+.btn.alt { background: transparent; color: var(--ink); border: 2px solid var(--ink); outline: none; box-shadow: 3px 3px 0 var(--red); text-shadow: inherit; }
+.btn.block { display: block; width: calc(100% - 6px); }
+.btn:disabled { opacity: 0.45; box-shadow: none; cursor: not-allowed; }
+.btns { display: flex; flex-wrap: wrap; }
+:focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }
 
-.columns { display: grid; gap: 12px; grid-template-columns: 1fr; }
-@media (min-width: 700px) { .columns { grid-template-columns: repeat(3, 1fr); } }
-.words { display: flex; flex-wrap: wrap; gap: 6px; max-height: 34vh; overflow-y: auto; padding: 2px; }
-@media (min-width: 700px) { .words { flex-direction: column; flex-wrap: nowrap; max-height: 52vh; } }
-.word { text-align: left; padding: 8px 12px; }
-.word[aria-pressed="true"] { background: var(--pick); border-color: var(--accent); font-weight: bold; }
+/* Column colours: .c1/.c2/.c3 set --c for everything inside (headings, picked words, tabs, insult words). */
+.c1 { --c: var(--c1); }
+.c2 { --c: var(--c2); }
+.c3 { --c: var(--c3); }
 
-.sticky {
-  position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px 14px;
-  background: var(--bg); border-top: 1px solid var(--line); text-align: center;
+/* The word picker: columns stacked on a phone, the page scrolls (no nested scrolling). */
+.picker { display: grid; gap: 12px; grid-template-columns: 1fr; }
+.col { border: 2px solid var(--ink); }
+.col h3 {
+  position: sticky; top: 0; z-index: 1;
+  padding: 5px 8px 3px; background: var(--paper); border-bottom: 4px double var(--ink);
+  color: var(--c); text-shadow: 0 0 0.6px var(--c);
 }
-.sticky button { margin-top: 6px; }
-.preview { margin: 0; font-size: 1.15rem; font-style: italic; }
-.error { margin: 2px 0 0; min-height: 1.4em; color: var(--accent); font-size: .9rem; }
+.words { display: grid; grid-template-columns: 1fr 1fr; }
+.word {
+  min-height: 44px; display: flex; align-items: center; gap: 4px; padding: 2px 8px;
+  background: transparent; border: 0; border-bottom: 1px solid var(--ink-soft);
+  font-size: 1.2rem; line-height: 1.1; text-align: left; text-shadow: inherit; overflow-wrap: anywhere;
+}
+.word:nth-child(odd) { border-right: 1px solid var(--ink-soft); }
+.word .mark { flex: none; width: 0; overflow: visible; visibility: hidden; font-size: 1rem; }
+.word .txt { display: inline-block; }
+/* Coloured words: picked words in a list, and the words of an insult. */
+.w, .word[aria-pressed="true"] { color: var(--c); text-shadow: 0.6px 0 0 var(--c); }
+.word[aria-pressed="true"] { background: color-mix(in srgb, var(--c) 12%, transparent); }
+.word[aria-pressed="true"] .mark { visibility: visible; width: 1.1rem; }
+.word[aria-pressed="true"] .txt { border-bottom: 2px solid var(--c); transform: rotate(-0.8deg); }
 
-.cards { display: grid; gap: 12px; margin: 16px 0; }
-@media (min-width: 700px) { .cards { grid-template-columns: 1fr 1fr; } }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
-.insult { margin: 0; font-size: 1.5rem; font-style: italic; }
-.countdown { display: grid; place-items: center; min-height: 60vh; font-size: 7rem; font-weight: bold; color: var(--accent); }
-.scoreboard { display: flex; gap: 12px; margin: 16px 0; }
-.score { flex: 1; text-align: center; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
-.score span { display: block; color: var(--muted); }
-.score strong { font-size: 3rem; }
-footer { padding-top: 16px; padding-bottom: 24px; color: var(--muted); font-size: .8rem; }
+/* Fixed bottom bar: live insult, column tabs, and the imprint button, within thumb reach. */
+.bar {
+  position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); z-index: 5;
+  width: min(100%, 980px); padding: 8px 14px calc(8px + env(safe-area-inset-bottom));
+  background: var(--paper); border-top: 4px double var(--ink);
+}
+.preview { margin: 0 0 6px; font-style: italic; font-size: 1.25rem; line-height: 1.1; }
+.preview .blank { color: var(--ink-soft); }
+.problem { margin: 0 0 4px; color: var(--red); font-size: 0.95rem; }
+.problem:empty { display: none; }
+.controls { display: grid; grid-template-columns: repeat(var(--n, 3), 1fr) 2.4fr; gap: 6px; }
+.tab { min-height: 44px; background: transparent; border: 2px solid var(--ink); font-family: var(--caps); font-size: 1rem; text-shadow: inherit; }
+.tab.done { background: var(--c); border-color: var(--c); color: var(--paper); text-shadow: none; }
+.controls .btn { margin: 0 4px 4px 0; padding: 6px 8px; font-size: 1.05rem; box-shadow: 3px 3px 0 var(--red); }
+
+/* Reveal, scores, countdown */
+.cards { display: grid; gap: 10px; }
+.card { padding: 6px 10px 10px; border: 2px solid var(--ink); border-top: 4px double var(--ink); }
+.insult { margin: 2px 0 0; font-style: italic; font-size: clamp(1.7rem, 8.5vw, 2.5rem); line-height: 1.05; }
+.ask { margin: 0; font-style: italic; font-size: 1.2rem; }
+.scoreboard { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.score { padding: 6px 8px; border: 2px solid var(--ink); text-align: center; font-family: var(--caps); text-transform: uppercase; letter-spacing: 0.06em; }
+.score strong { display: block; font-family: var(--display); font-weight: 400; font-size: 4.2rem; line-height: 1; color: var(--red); text-shadow: -3px 2px 0 var(--ghost); }
+.countdown {
+  flex: 1; display: grid; place-items: center; min-height: 55vh; text-align: center;
+  font-family: var(--display); font-size: min(38vw, 9rem); line-height: 1; color: var(--red);
+  text-shadow: -5px 4px 0 var(--ghost);
+}
+.countdown.go { font-size: min(17vw, 5.5rem); }
+
+/* Wider screens: three unequal columns side by side, each its own scroll area. */
+@media (min-width: 720px) {
+  body { font-size: 19px; }
+  .sheet { padding: 14px 22px 14px; }
+  .picker { grid-template-columns: 1.15fr 0.9fr 1fr; gap: 0; border: 2px solid var(--ink); }
+  .col { border: 0; }
+  .col + .col { border-left: 1px solid var(--ink); }
+  .col + .col + .col { border-left: 3px solid var(--ink); }
+  .words { grid-template-columns: 1fr; max-height: 56vh; overflow-y: auto; }
+  .word { min-height: 36px; }
+  .word:nth-child(odd) { border-right: 0; }
+  .col h3 { position: static; }
+  .tab { display: none; }
+  .controls { grid-template-columns: 1fr; }
+  .controls .btn { justify-self: end; font-size: 1.2rem; padding: 8px 20px; }
+  .cards { grid-template-columns: 1fr 1fr; }
+  .fields { grid-template-columns: 1fr 1fr 1fr; }
+  .bar-space { height: 120px; }
+}
+
+@media (hover: hover) {
+  .word:hover { background: rgba(35, 24, 16, 0.07); }
+  .btn:hover:not(:disabled) { box-shadow: 3px 2px 0 var(--red); }
+}

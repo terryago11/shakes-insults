@@ -15,6 +15,9 @@ from pathlib import Path
 import openpyxl
 
 
+WORDS_CREDIT = "Words drawn from various sources."  # the source spreadsheet and PDF credit no word sources
+
+
 def js_list(words, indent="      "):
     items = [json.dumps(w, ensure_ascii=False) for w in words]
     lines = [", ".join(items[i:i + 6]) for i in range(0, len(items), 6)]
@@ -28,7 +31,7 @@ def write_pack(path, pack_id, name, pools, columns):
         "// This file IS the word bank: edit it by hand to adapt the game (regenerating overwrites it).\n"
         "InsultGame.registerPack({\n"
         f"  id: {json.dumps(pack_id)},\n"
-        f'  meta: {{ name: {json.dumps(name)}, credit: "", license: "" }},\n'
+        f'  meta: {{ name: {json.dumps(name)}, credit: {json.dumps(WORDS_CREDIT)}, license: "" }},\n'
         '  prefix: "Thou",\n'
         "  pools: {\n" + body + ",\n  },\n"
         f"  columns: {json.dumps(columns)},\n"

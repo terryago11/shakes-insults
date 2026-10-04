@@ -2,7 +2,7 @@
 // This file IS the word bank: edit it by hand to adapt the game (regenerating overwrites it).
 InsultGame.registerPack({
   id: "short",
-  meta: { name: "Short list (66 words per column)", credit: "", license: "" },
+  meta: { name: "Short list (66 words per column)", credit: "Words drawn from various sources.", license: "" },
   prefix: "Thou",
   pools: {
     "column1": [
