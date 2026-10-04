@@ -20,10 +20,19 @@ GitHub and may have moved, so check GitHub's current documentation.
 
 ## Check the repository itself
 
-- **Git history**: the commits so far use the owner's personal email address as author, and the
-  commit trailers include links to private claude.ai sessions. Everything in history becomes
-  public. If that is not wanted, rewrite the history (new author identity, trailers removed) and
-  force-push **before** the first public push; afterwards it is much harder to undo.
+- **Git history**: rewritten on 2026-10-04 so every commit uses the GitHub noreply address
+  (`<id>+<username>@users.noreply.github.com`) instead of a personal email; file contents were
+  unchanged (identical tree hash). Still in the commit messages: the `Co-Authored-By: Claude ...
+  <noreply@anthropic.com>` attribution and `Claude-Session:` links to private claude.ai sessions
+  (not accessible to others). **Caveat**: after a force-push, GitHub can keep the old, now
+  unreachable commits and serve them by full commit SHA until it garbage-collects them. For
+  certainty before going public, either ask GitHub Support to purge them, or create a fresh empty
+  repository and push the clean history to it.
+- **(settings) Email privacy** (account settings, Emails): turn on "Keep my email addresses
+  private" and "Block command line pushes that expose my email", so future commits cannot leak a
+  personal address. Commit with the noreply address (`git config user.email`).
+- **Leftover branch**: delete `broadside-ui` in the GitHub UI. It now points at the same commit as
+  `main` (this session's git proxy refused to delete remote branches).
 - **Files**: a pattern scan of the tracked text files found no secrets or email addresses. The
   spreadsheet `reference/Insults.xlsx` has no author metadata. Re-run a scan if files were added.
 - **Licenses present**: `LICENSE` (MIT, code), `fonts/OFL.txt` (fonts), word lists public domain
