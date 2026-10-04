@@ -31,8 +31,8 @@ GitHub and may have moved, so check GitHub's current documentation.
   repository and push the clean history to it.
 - **(settings) Email privacy** (account settings, Emails, github.com/settings/emails): turn on
   "Keep my email addresses private" and "Block command line pushes that expose my email". The
-  owner has changed the privacy option; whether it applies to web merges has not been confirmed
-  (check `git log -1 --format='%ae %ce'` after the next one). Commit with the noreply address
+  owner turned the privacy option on, and a web merge afterwards (PR 2) was authored with the
+  noreply address. Still worth checking `git log -1 --format='%ae %ce'` after a web merge. Commit with the noreply address
   (`git config user.email`).
 - ~~Leftover branch `broadside-ui`~~: deleted.
 - **Files**: a pattern scan of the tracked text files found no secrets or email addresses. The
