@@ -66,21 +66,36 @@ test("buildInsult and validatePicks", () => {
   assert.strictEqual(G.validatePicks(["a", "a", "c"]), "duplicate");
 });
 
-test("scoring: awardPoint is pure, leader handles ties", () => {
-  const s = [0, 0];
-  const s2 = G.awardPoint(s, 1);
-  assert.deepStrictEqual(s, [0, 0]);
-  assert.deepStrictEqual(s2, [0, 1]);
-  assert.strictEqual(G.leader(s2), 1);
-  assert.strictEqual(G.leader([2, 2]), null);
+const POINTS = { win: 2, draw: 1 };
+
+test("scoring: a win gives the winner the win points, and nothing else changes", () => {
+  const before = [0, 1, 0, 3];
+  const after = G.scoreRound(before, [1, 3], 3, POINTS);
+  assert.deepStrictEqual(after, [0, 1, 0, 5]);
+  assert.deepStrictEqual(before, [0, 1, 0, 3], "must not mutate");
+  assert.deepStrictEqual(G.scoreRound(before, [0, 2], 0, POINTS), [2, 1, 0, 3], "player 0 is a winner, not a draw");
 });
 
-test("scoring: a draw (null) awards no point and does not mutate", () => {
-  const s = [1, 0];
-  assert.deepStrictEqual(G.awardPoint(s, null), [1, 0]);
-  assert.notStrictEqual(G.awardPoint(s, null), s);
-  assert.deepStrictEqual(s, [1, 0]);
-  assert.deepStrictEqual(G.awardPoint(s, 0), [2, 0], "0 is a winner, not a draw");
+test("scoring: a draw (null) gives each duelist the draw points, never the judge", () => {
+  assert.deepStrictEqual(G.scoreRound([0, 0, 0, 0], [1, 3], null, POINTS), [0, 1, 0, 1]);
+});
+
+test("leaders lists everyone on the top score; leader is null on any tie", () => {
+  assert.deepStrictEqual(G.leaders([1, 3, 2]), [1]);
+  assert.deepStrictEqual(G.leaders([3, 1, 3]), [0, 2]);
+  assert.deepStrictEqual(G.leaders([0, 0, 0]), [0, 1, 2]);
+  assert.strictEqual(G.leader([2, 1]), 0);
+  assert.strictEqual(G.leader([3, 1, 3]), null);
+});
+
+test("disambiguate numbers only the names that are shared, ignoring case", () => {
+  const label = (n, k) => `${n} ${"I".repeat(k)}`;
+  assert.deepStrictEqual(G.disambiguate(["Ada", "Ben", "Cy"], label), ["Ada", "Ben", "Cy"]);
+  assert.deepStrictEqual(G.disambiguate(["Ada", "Ben", "ada", "Ada"], label), ["Ada I", "Ben", "ada II", "Ada III"]);
+  assert.deepStrictEqual(G.disambiguate(["Ann", "Ann", "Bo", "Bo"], label), ["Ann I", "Ann II", "Bo I", "Bo II"]);
+  // A typed name that collides with a generated one still ends up unique.
+  const out = G.disambiguate(["Ada", "Ada", "Ada I"], label);
+  assert.strictEqual(new Set(out.map((n) => n.toLowerCase())).size, 3, `still shared: ${out}`);
 });
 
 test("parseSavedNames accepts exactly the right shape and rejects the rest", () => {
@@ -92,27 +107,6 @@ test("parseSavedNames accepts exactly the right shape and rejects the rest", () 
   }
 });
 
-test("leaders lists everyone on the top score; leader is null on any tie", () => {
-  assert.deepStrictEqual(G.leaders([1, 3, 2]), [1]);
-  assert.deepStrictEqual(G.leaders([3, 1, 3]), [0, 2]);
-  assert.deepStrictEqual(G.leaders([0, 0, 0]), [0, 1, 2]);
-  assert.strictEqual(G.leader([3, 1, 3]), null);
-});
-
-test("awardPoint works for any number of players", () => {
-  assert.deepStrictEqual(G.awardPoint([0, 0, 0, 0, 0], 3), [0, 0, 0, 1, 0]);
-});
-
-test("clampRounds keeps the typed value whole and within range, else uses the fallback", () => {
-  assert.strictEqual(G.clampRounds("5", 3, 30, 5), 5);
-  assert.strictEqual(G.clampRounds("1", 3, 30, 5), 3);
-  assert.strictEqual(G.clampRounds("0", 3, 30, 5), 3);
-  assert.strictEqual(G.clampRounds("-4", 3, 30, 5), 3);
-  assert.strictEqual(G.clampRounds("99", 3, 30, 5), 30);
-  assert.strictEqual(G.clampRounds("6.6", 3, 30, 5), 7);
-  for (const bad of ["", "  ", "abc", "NaN", "Infinity"]) assert.strictEqual(G.clampRounds(bad, 3, 30, 5), 5, `"${bad}"`);
-});
-
 // A seeded random source, so plans are repeatable in tests.
 function seeded(seed) {
   let s = seed;
@@ -120,70 +114,71 @@ function seeded(seed) {
 }
 
 const spread = (counts) => Math.max(...counts) - Math.min(...counts);
+const pairKey = (duelists) => [...duelists].sort((x, y) => x - y).join("-");
 
-test("planRounds: valid rounds, judge never duels, duel counts differ by at most one (3 to 10 players)", () => {
-  for (let n = 3; n <= 10; n++) {
-    for (const rounds of [3, 4, 5, 7, 10, 15, 30]) {
-      for (const seed of [1, 2, 3]) {
-        const plan = G.planRounds(n, rounds, seeded(seed));
-        assert.strictEqual(plan.length, rounds);
-        const duels = Array(n).fill(0);
-        for (const { duelists: [a, b], judge } of plan) {
-          for (const p of [a, b, judge]) assert.ok(Number.isInteger(p) && p >= 0 && p < n, `bad player ${p}`);
-          assert.strictEqual(new Set([a, b, judge]).size, 3, `n=${n}: duelists and judge must be three different players`);
-          duels[a]++; duels[b]++;
-        }
-        assert.ok(spread(duels) <= 1, `n=${n} rounds=${rounds} seed=${seed}: duels ${duels}`);
-      }
+// Every (players, duels each) the planner accepts: 3 to 10 players, duels from 1 up to everyone else,
+// with players * duels even (each duel has two duelists).
+const sizes = [];
+for (let n = 3; n <= 10; n++) for (let k = 1; k <= n - 1; k++) if ((n * k) % 2 === 0) sizes.push([n, k]);
+
+test("duelsEach: aims for the target, never exceeds the opponents, keeps the count even", () => {
+  const got = [3, 4, 5, 6, 7, 8, 9, 10].map((n) => G.duelsEach(n, 3));
+  assert.deepStrictEqual(got, [2, 3, 2, 3, 2, 3, 2, 3]);
+  for (let n = 3; n <= 10; n++) assert.ok((n * G.duelsEach(n, 3)) % 2 === 0);
+});
+
+test("planRounds: everyone duels exactly the same number of times and no pair repeats", () => {
+  for (const [n, k] of sizes) {
+    for (const seed of [1, 2, 3]) {
+      const plan = G.planRounds(n, k, seeded(seed));
+      assert.strictEqual(plan.length, (n * k) / 2, `n=${n} k=${k}`);
+      assert.strictEqual(new Set(plan.map((m) => pairKey(m.duelists))).size, plan.length, `n=${n} k=${k} seed=${seed}: a pair repeats`);
+      const duels = Array(n).fill(0);
+      plan.forEach(({ duelists }) => duelists.forEach((p) => duels[p]++));
+      assert.deepStrictEqual(duels, Array(n).fill(k), `n=${n} k=${k}: duel counts ${duels}`);
     }
   }
 });
 
-test("planRounds: judging is spread out too, and pairs repeat only after every pair has met", () => {
-  for (let n = 3; n <= 10; n++) {
-    for (const rounds of [3, 5, 8, 12, 30]) {
-      const plan = G.planRounds(n, rounds, seeded(7));
+test("planRounds: the judge is never a duelist and judging is as even as possible", () => {
+  for (const [n, k] of sizes) {
+    for (const seed of [1, 2, 3]) {
+      const plan = G.planRounds(n, k, seeded(seed));
       const judged = Array(n).fill(0);
-      plan.forEach(({ judge }) => judged[judge]++);
-      assert.ok(spread(judged) <= 2, `n=${n} rounds=${rounds}: judged ${judged}`);
-      const seen = new Set();
-      const allPairs = (n * (n - 1)) / 2;
-      plan.forEach(({ duelists }, r) => {
-        const key = [...duelists].sort().join("-");
-        if (r < allPairs) assert.ok(!seen.has(key), `n=${n}: pair ${key} repeated in round ${r + 1} before every pair had met`);
-        seen.add(key);
-      });
+      for (const { duelists, judge } of plan) {
+        assert.strictEqual(new Set([...duelists, judge]).size, 3, `n=${n}: two duelists and a judge must be three different players`);
+        judged[judge]++;
+      }
+      assert.ok(judged.every((c) => c === Math.floor(plan.length / n) || c === Math.ceil(plan.length / n)), `n=${n} k=${k}: judged ${judged}`);
     }
   }
 });
 
-test("planRounds: after whole cycles every pair has met the same number of times", () => {
-  for (let n = 3; n <= 8; n++) {
-    const all = (n * (n - 1)) / 2;
-    for (const cycles of [1, 2]) {
-      const count = {};
-      G.planRounds(n, all * cycles, seeded(11)).forEach(({ duelists }) => {
-        const k = [...duelists].sort().join("-");
-        count[k] = (count[k] || 0) + 1;
-      });
-      assert.strictEqual(Object.keys(count).length, all);
-      assert.ok(Object.values(count).every((c) => c === cycles), `n=${n}, ${cycles} cycle(s): ${JSON.stringify(count)}`);
-    }
+test("planRounds: duel counts stay level while the game goes on", () => {
+  for (const [n, k] of sizes) {
+    const duels = Array(n).fill(0);
+    G.planRounds(n, k, seeded(3)).forEach(({ duelists }, r) => {
+      duelists.forEach((p) => duels[p]++);
+      assert.ok(spread(duels) <= 1, `n=${n} k=${k}: after round ${r + 1} duel counts are ${duels}`);
+    });
   }
 });
 
-test("planRounds: with three players, three rounds is every pair once and everyone judges once", () => {
-  const plan = G.planRounds(3, 3, seeded(5));
-  assert.deepStrictEqual(plan.map((m) => [...m.duelists].sort().join("-")).sort(), ["0-1", "0-2", "1-2"]);
+test("planRounds: with three players it is three rounds and everyone judges once", () => {
+  const plan = G.planRounds(3, 2, seeded(5));
+  assert.deepStrictEqual(plan.map((m) => pairKey(m.duelists)).sort(), ["0-1", "0-2", "1-2"]);
   assert.deepStrictEqual(plan.map((m) => m.judge).sort(), [0, 1, 2]);
 });
 
 test("planRounds: repeatable for a seed, varies between seeds, and rejects fewer than three players", () => {
-  assert.deepStrictEqual(G.planRounds(5, 6, seeded(9)), G.planRounds(5, 6, seeded(9)));
-  const firsts = new Set([1, 2, 3, 4, 5, 6, 7, 8].map((s) => JSON.stringify(G.planRounds(5, 1, seeded(s)))));
-  assert.ok(firsts.size > 1, "different seeds should start differently");
-  assert.throws(() => G.planRounds(2, 3), /at least 3/);
-  assert.throws(() => G.planRounds(3.5, 3), /at least 3/);
+  assert.deepStrictEqual(G.planRounds(5, 4, seeded(9)), G.planRounds(5, 4, seeded(9)));
+  const plans = new Set([1, 2, 3, 4, 5, 6, 7, 8].map((s) => JSON.stringify(G.planRounds(6, 3, seeded(s)))));
+  assert.ok(plans.size > 1, "different seeds should give different plans");
+  assert.throws(() => G.planRounds(2, 1), /at least 3/);
+  assert.throws(() => G.planRounds(3.5, 2), /at least 3/);
+  assert.throws(() => G.planRounds(5, 3), /cannot each duel/, "15 duel slots cannot be shared into duels");
+  assert.throws(() => G.planRounds(4, 4), /cannot each duel/, "nobody can duel more opponents than exist");
+  assert.throws(() => G.planRounds(4, 0), /cannot each duel/);
 });
 
 test("text helpers: makeT fills placeholders, throws on a missing key; nth falls back", () => {
@@ -221,19 +216,28 @@ const strings = (v) => (typeof v === "string" ? [v] : Array.isArray(v) ? v.flatM
 
 test("text config: only placeholders the game actually supplies appear in the text", () => {
   // Keep in step with the variables src/app.js passes to t(). Catches typos like {nmae}.
-  const supplied = new Set(["name", "names", "judge", "n", "ordinal", "total", "roman", "a", "b", "min"]);
+  const supplied = new Set(["name", "names", "judge", "n", "ordinal", "total", "roman", "a", "b", "points"]);
   for (const s of strings(G.text)) {
     for (const [, p] of s.matchAll(/\{(\w+)\}/g)) assert.ok(supplied.has(p), `unknown placeholder {${p}} in "${s}"`);
   }
 });
 
-test("settings: player and round limits are sane, and the default round count is allowed", () => {
-  const s = G.settings;
-  assert.ok(s.minPlayers >= 3, "a game needs two duelists and a judge");
-  assert.ok(s.maxPlayers >= s.minPlayers);
-  assert.ok(s.minRounds >= 1 && s.maxRounds >= s.minRounds);
-  assert.ok(s.defaultRounds >= s.minRounds && s.defaultRounds <= s.maxRounds);
-  assert.ok(G.text.ordinals.length >= s.maxPlayers, "text.ordinals is shorter than the largest player count");
+test("settings: limits and points are sane, and the text config has words for every round", () => {
+  const st = G.settings;
+  assert.ok(st.minPlayers >= 3, "a game needs two duelists and a judge");
+  assert.ok(st.maxPlayers >= st.minPlayers);
+  assert.ok(st.pointsForWin > st.pointsForDraw && st.pointsForDraw > 0, "a win should beat a draw, and a draw should score");
+  assert.ok(Number.isInteger(st.duelsPerPlayer) && st.duelsPerPlayer >= 1);
+  let mostRounds = 0;
+  for (let n = st.minPlayers; n <= st.maxPlayers; n++) {
+    const k = G.duelsEach(n, st.duelsPerPlayer);
+    assert.doesNotThrow(() => G.planRounds(n, k), `${n} players x ${k} duels each must be plannable`);
+    mostRounds = Math.max(mostRounds, (n * k) / 2);
+  }
+  assert.ok(G.text.ordinals.length >= mostRounds && G.text.cardinals.length >= mostRounds, `text.ordinals/cardinals should reach ${mostRounds} (the most rounds a game can have)`);
+  assert.ok(G.text.ordinals.length >= st.maxPlayers, "text.ordinals is shorter than the largest player count");
+  assert.ok(G.text.cardinals.length >= Math.max(st.pointsForWin, st.pointsForDraw));
+  assert.ok(G.text.romans.length >= st.maxPlayers, "text.romans must cover duplicate-name numbering");
 });
 
 test("no player-facing text is hard-coded in index.html or style.css", () => {

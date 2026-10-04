@@ -33,7 +33,7 @@ Insult Duel is a **static, client-side-only** web page: HTML, CSS and vanilla Ja
 - **No backend, accounts or database.** There is nothing to log into and no server-side data.
 - **No personal data collected.** Player names are typed into the page and held in memory for the current game. They are never transmitted. The only copy that persists is the local one described under "Minimal storage" below.
 - **No network requests.** The fonts are bundled locally (`fonts/`), and the page loads no third-party scripts, analytics or trackers. The browser smoke test (`npm run test:e2e`) fails if the page requests anything outside the local files.
-- **Minimal storage.** The game uses no cookies. It remembers the player names (three to ten) in `localStorage` on the player's own device (key set in `config/settings.js`; set it to `""` to turn this off). The saved value is validated before use and shown only through `textContent`. Nothing is sent anywhere.
+- **Minimal storage.** The game uses no cookies. It remembers the player names (three to six) in `localStorage` on the player's own device (key set in `config/settings.js`; set it to `""` to turn this off). The saved value is validated before use and shown only through `textContent`. Nothing is sent anywhere.
 
 ### Rendering and injection
 

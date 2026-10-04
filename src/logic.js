@@ -52,11 +52,13 @@
     return null;
   }
 
-  // Judge picks the winning player (an index into `scores`), or null for a draw (no point).
+  // Scores one duel. `winnerIdx` is the winning player's index (it must be one of `duelists`), or
+  // null for a draw, which gives each duelist `points.draw`. The judge never scores.
   // Returns a new scores array.
-  function awardPoint(scores, winnerIdx) {
+  function scoreRound(scores, duelists, winnerIdx, points) {
     const next = scores.slice();
-    if (winnerIdx !== null) next[winnerIdx] += 1;
+    if (winnerIdx === null) duelists.forEach((p) => (next[p] += points.draw));
+    else next[winnerIdx] += points.win;
     return next;
   }
 
@@ -87,94 +89,128 @@
     return top.length === 1 ? top[0] : null;
   }
 
-  // The rounds field is typed by hand: anything unreadable becomes `fallback`, and the result is
-  // kept within [min, max] and whole.
-  function clampRounds(value, min, max, fallback) {
-    const n = Math.round(Number(value));
-    return Number.isFinite(n) && String(value).trim() !== "" ? Math.min(max, Math.max(min, n)) : fallback;
+  // Players typed into the setup screen may share a name. Every name that appears more than once
+  // (ignoring case) is replaced by label(name, k), k = 1, 2, ... in seat order ("Ada" twice
+  // becomes "Ada I", "Ada II"); names that are already unique are left alone.
+  function disambiguate(names, label) {
+    let out = names.slice();
+    for (let pass = 0; pass < names.length; pass++) {
+      const count = {};
+      out.forEach((n) => (count[n.toLowerCase()] = (count[n.toLowerCase()] || 0) + 1));
+      if (Object.values(count).every((c) => c === 1)) break;
+      const seen = {};
+      out = out.map((n) => {
+        const key = n.toLowerCase();
+        if (count[key] === 1) return n;
+        seen[key] = (seen[key] || 0) + 1;
+        return label(n, seen[key]);
+      });
+    }
+    return out;
   }
 
-  // Plans who duels whom and who judges, for every round of a game with `players` players.
-  // Returns [{ duelists: [a, b], judge }, ...] with player indexes. The judge is never a duelist.
-  //
-  // The duels come from "cycles": one cycle is every pair of players meeting exactly once, in an
-  // order where duel counts never differ by more than one (so stopping after any round is fair).
-  // A longer game starts another cycle. `rng` decides who starts and breaks ties; pass a seeded
-  // one for a repeatable plan. The judge of each round is, among the other players, whoever has
-  // judged least so far, then whoever has duelled most.
-  function planRounds(players, rounds, rng = Math.random) {
+  // How many duels each player has in a game. Aim for `target` (3 in config/settings.js), but never
+  // more than there are opponents (players - 1), and keep players * duels even, since every duel
+  // has two duelists (so an odd number of players with an odd target gets one fewer).
+  function duelsEach(players, target) {
+    const wanted = (players * target) % 2 === 0 ? target : target - 1;
+    return Math.min(players - 1, wanted);
+  }
+
+  // Plans a whole game: `players` players (3 or more) who each duel exactly `duels` times, no pair
+  // meeting twice. Returns [{ duelists: [a, b], judge }, ...] with player indexes (one entry per
+  // round); the judge is never a duelist. Duel counts stay level while the game goes on and
+  // back-to-back duels are avoided where possible; each player judges either the floor or the
+  // ceiling of (rounds / players) times. `rng` decides who starts and breaks ties; pass a seeded
+  // one for a repeatable plan.
+  function planRounds(players, duels, rng = Math.random) {
     if (!Number.isInteger(players) || players < 3) throw new Error("planRounds needs at least 3 players");
-    const pairs = [];
-    while (pairs.length < rounds) pairs.push(...duelCycle(players, rng));
-    pairs.length = rounds;
-
-    const duels = Array(players).fill(0);
-    const judged = Array(players).fill(0);
-    return pairs.map(([a, b]) => {
-      let judge = null;
-      let judgeKey = null;
-      for (let p = 0; p < players; p++) {
-        if (p === a || p === b) continue;
-        const key = [judged[p], -duels[p]];
-        if (judgeKey === null || cmp(key, judgeKey) < 0) {
-          judge = p;
-          judgeKey = key;
-        }
-      }
-      duels[a]++; duels[b]++; judged[judge]++;
-      return { duelists: [a, b], judge };
-    });
+    if (!Number.isInteger(duels) || duels < 1 || duels > players - 1 || (players * duels) % 2 !== 0) {
+      throw new Error(`planRounds: ${players} players cannot each duel ${duels} times`);
+    }
+    const pairs = orderDuels(players, duels, rng);
+    const judges = assignJudges(players, pairs, rng);
+    return pairs.map((duelists, i) => ({ duelists, judge: judges[i] }));
   }
 
-  // One cycle of duels: all players*(players-1)/2 pairs, each once, found by depth-first search so
-  // that no choice leaves a forced repeat later. Order of preference at each step: keep duel
-  // counts level, avoid anyone duelling two rounds running, then the random rank. If the search
-  // runs out of its step budget (not seen for 3 to 10 players), it falls back to allowing repeats.
-  function duelCycle(n, rng) {
+  // Distinct pairs, `each` duels per player, found by depth-first search so that no choice leaves a
+  // stuck position later. Preference at each step: keep duel counts level, avoid anyone duelling two
+  // rounds running, then the random rank. (A step budget guards against a runaway search; the
+  // supported sizes never need it.)
+  function orderDuels(n, each, rng) {
     const rank = [];
     shuffle([...Array(n).keys()], rng).forEach((p, pos) => (rank[p] = pos));
-    const total = (n * (n - 1)) / 2;
+    const total = (n * each) / 2;
+    const used = new Set();
+    const duels = Array(n).fill(0);
+    const chosen = [];
+    let budget = 20000;
 
-    for (const allowRepeats of [false, true]) {
-      const used = new Set();
-      const duels = Array(n).fill(0);
-      const chosen = [];
-      let budget = 20000;
-
-      const extend = () => {
-        if (chosen.length === total) return true;
-        if (--budget < 0) return false;
-        const last = chosen.length ? chosen[chosen.length - 1] : [];
-        const options = [];
-        for (let i = 0; i < n; i++) {
-          for (let j = i + 1; j < n; j++) {
-            if (!allowRepeats && used.has(i * n + j)) continue;
-            duels[i]++; duels[j]++;
-            const level = Math.max(...duels) - Math.min(...duels) <= 1;
-            duels[i]--; duels[j]--;
-            if (!level) continue;
-            options.push({
-              pair: rank[i] < rank[j] ? [i, j] : [j, i],
-              key: [duels[i] + duels[j], last.includes(i) + last.includes(j), Math.min(rank[i], rank[j]), Math.max(rank[i], rank[j])],
-            });
-          }
+    const extend = () => {
+      if (chosen.length === total) return true;
+      if (--budget < 0) return false;
+      const last = chosen.length ? chosen[chosen.length - 1] : [];
+      const options = [];
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          if (used.has(i * n + j) || duels[i] >= each || duels[j] >= each) continue;
+          duels[i]++; duels[j]++;
+          const level = Math.max(...duels) - Math.min(...duels) <= 1;
+          duels[i]--; duels[j]--;
+          if (!level) continue;
+          options.push({
+            pair: rank[i] < rank[j] ? [i, j] : [j, i],
+            key: [duels[i] + duels[j], last.includes(i) + last.includes(j), Math.min(rank[i], rank[j]), Math.max(rank[i], rank[j])],
+          });
         }
-        options.sort((x, y) => cmp(x.key, y.key));
-        for (const { pair } of options) {
-          const [a, b] = pair;
-          const id = Math.min(a, b) * n + Math.max(a, b);
-          const wasUsed = used.has(id);
-          used.add(id); duels[a]++; duels[b]++; chosen.push(pair);
-          if (extend()) return true;
-          chosen.pop(); duels[a]--; duels[b]--;
-          if (!wasUsed) used.delete(id);
-        }
-        return false;
-      };
+      }
+      options.sort((x, y) => cmp(x.key, y.key));
+      for (const { pair } of options) {
+        const [a, b] = pair;
+        const id = Math.min(a, b) * n + Math.max(a, b);
+        used.add(id); duels[a]++; duels[b]++; chosen.push(pair);
+        if (extend()) return true;
+        chosen.pop(); duels[a]--; duels[b]--; used.delete(id);
+      }
+      return false;
+    };
 
-      if (extend()) return chosen;
-    }
-    throw new Error("duelCycle: no ordering found"); // cannot happen: repeats are allowed on the second pass
+    if (!extend()) throw new Error(`orderDuels: no ordering found for ${n} players with ${each} duels each`);
+    return chosen;
+  }
+
+  // A judge for every duel, never one of its duelists, so that every player judges either
+  // floor(duels / players) or ceil(duels / players) times. Depth-first search, preferring whoever
+  // has judged least; candidates are tried in a random order so games differ.
+  function assignJudges(n, duels, rng) {
+    const rank = [];
+    shuffle([...Array(n).keys()], rng).forEach((p, pos) => (rank[p] = pos));
+    const floor = Math.floor(duels.length / n);
+    const cap = Math.ceil(duels.length / n);
+    const judged = Array(n).fill(0);
+    const chosen = [];
+    let budget = 50000;
+
+    const extend = () => {
+      const i = chosen.length;
+      if (i === duels.length) return true;
+      if (--budget < 0) return false;
+      // Prune: the remaining duels must be enough to bring everyone up to the floor.
+      const missing = judged.reduce((sum, c) => sum + Math.max(0, floor - c), 0);
+      if (missing > duels.length - i) return false;
+      const options = [...Array(n).keys()]
+        .filter((p) => !duels[i].includes(p) && judged[p] < cap)
+        .sort((x, y) => judged[x] - judged[y] || rank[x] - rank[y]);
+      for (const p of options) {
+        judged[p]++; chosen.push(p);
+        if (extend()) return true;
+        chosen.pop(); judged[p]--;
+      }
+      return false;
+    };
+
+    if (!extend()) throw new Error(`assignJudges: no fair assignment found for ${n} players`);
+    return chosen;
   }
 
   // Lexicographic comparison of two number lists.
@@ -204,7 +240,7 @@
     return list[n - 1] !== undefined ? list[n - 1] : String(n);
   }
 
-  const api = { packs, shuffle, wordText, registerPack, resolveColumns, buildInsult, validatePicks, awardPoint, parseSavedNames, leaders, leader, clampRounds, planRounds, makeT, nth };
+  const api = { packs, shuffle, wordText, registerPack, resolveColumns, buildInsult, validatePicks, scoreRound, parseSavedNames, disambiguate, leaders, leader, duelsEach, planRounds, makeT, nth };
   root.InsultGame = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);

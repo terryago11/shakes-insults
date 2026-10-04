@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Optional browser smoke test: plays a full 3-round game on a phone-sized screen from file://.
+"""Optional browser smoke test: plays a full game on a phone-sized screen from file://.
 
 Needs:  pip install playwright   (and a Chromium; set CHROMIUM=/path/to/chromium if Playwright's
         own download is not available)
@@ -14,6 +14,7 @@ scrolls the next column up.
 """
 import os
 import pathlib
+import re
 from playwright.sync_api import sync_playwright
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -91,20 +92,21 @@ def main():
         shot(page, "1-setup", full_page=True)
         audit(page, "setup")
 
-        # Seats: three to start with, nobody can be struck out at three, up to ten can be added.
+        # Seats: three to start with, nobody can be struck out at three, up to six can be added.
         seats = page.locator(".seat input")
         add = page.locator(".fields + .btn")
         assert seats.count() == 3, "three seats to start"
         assert page.locator(".seat .btn").count() == 0, "nobody can be removed at the minimum of three players"
-        for _ in range(7):
+        for _ in range(3):
             add.tap()
-        assert seats.count() == 10 and add.is_disabled(), "ten players is the maximum"
-        assert len({seats.nth(i).input_value() for i in range(10)}) == 10, "added seats get distinct default names"
-        audit(page, "setup with ten players")
-        shot(page, "1b-setup-ten", full_page=True)
-        for _ in range(6):
+        assert seats.count() == 6 and add.is_disabled(), "six players is the maximum"
+        assert len({seats.nth(i).input_value() for i in range(6)}) == 6, "added seats get distinct default names"
+        audit(page, "setup with six players")
+        shot(page, "1b-setup-six", full_page=True)
+        for _ in range(2):
             page.locator(".seat .btn").last.tap()
         assert seats.count() == 4 and not add.is_disabled()
+        assert page.locator("input[type=number]").count() == 0, "the number of rounds is fixed: there is no rounds field"
 
         names = ["Ada", "Ben", "Cy<b>x", "Dee"]
         for i, n in enumerate(names):
@@ -116,17 +118,17 @@ def main():
         players = ["Ada", "Cy<b>x", "Dee", "Ben"]  # seat order
         assert [seats.nth(i).input_value() for i in range(4)] == players
 
-        page.locator("input[type=number]").fill("1")  # below the minimum of three rounds
         go(page)  # begin
         audit(page, "handoff")
 
         scores = {n: 0 for n in players}
         duel_counts = {n: 0 for n in players}
+        judge_counts = {n: 0 for n in players}
         pairs = set()
         rnd = 0
         while True:
             rnd += 1
-            assert rnd <= 10, "the game should have ended after three rounds"
+            assert rnd <= 12, "the game should have ended after six rounds"
             duelists, insults = [], {}
             for slot, picks in enumerate(((0, 1, 2), (5, 4, 3))):
                 who = who_is_in(page.locator("main h2").text_content(), players)
@@ -163,28 +165,33 @@ def main():
             others = [n for n in players if n not in duelists]
             ask = page.locator(".ask").text_content()
             assert sum(n in ask for n in others) == 1 and not any(d in ask for d in duelists), f"the judge must be one of the other players: {ask!r}"
+            judge_counts[who_is_in(ask, others)] += 1
             audit(page, "reveal")
             if rnd == 1:
                 shot(page, "4-reveal", full_page=True)
             assert page.locator(".btns .btn").count() == 3, "reveal offers two winners and a draw"
-            verdict = rnd % 3  # round 1: first duelist wins, round 2: a draw, round 3: second duelist wins
+            verdict = rnd % 3  # first duelist wins, then a draw, then the second duelist wins, and so on
             page.locator(".btns .btn").nth({1: 0, 2: 2, 0: 1}[verdict]).tap()
             for d in duelists:
                 duel_counts[d] += 1
             pairs.add(frozenset(duelists))
             if verdict == 1:
-                scores[duelists[0]] += 1
+                scores[duelists[0]] += 2  # a win is two points
             elif verdict == 0:
-                scores[duelists[1]] += 1
+                scores[duelists[1]] += 2
+            else:
+                for d in duelists:
+                    scores[d] += 1  # a draw is one point each (the judge scores nothing)
             if page.locator("main .btns .btn.alt").count():  # the final screen offers "change setup"
                 break
             audit(page, "scores")
             assert read_scoreboard(page) == [(n, str(scores[n])) for n in players], "between rounds the board lists every player in seat order"
             go(page)  # next round
 
-        assert rnd == 3, f"a rounds entry of 1 should be raised to the minimum of three, but {rnd} rounds were played"
-        assert max(duel_counts.values()) - min(duel_counts.values()) <= 1, f"duels should be spread evenly: {duel_counts}"
-        assert len(pairs) == 3, "no pairing repeats in a short game"
+        assert rnd == 6, f"four players means every pair duels once, which is six rounds, but {rnd} were played"
+        assert set(duel_counts.values()) == {3}, f"everyone should duel everyone else once: {duel_counts}"
+        assert len(pairs) == 6, "no pairing repeats"
+        assert max(judge_counts.values()) - min(judge_counts.values()) <= 1, f"judging should be spread evenly: {judge_counts}"
         ranked = sorted(players, key=lambda n: -scores[n])  # stable: ties keep seat order
         assert read_scoreboard(page) == [(n, str(scores[n])) for n in ranked], "final board is ranked, ties in seat order"
         top = [n for n in players if scores[n] == max(scores.values())]
@@ -200,6 +207,14 @@ def main():
         page.reload()
         assert [page.locator(".seat input").nth(i).input_value() for i in range(4)] == players, "names should be remembered"
         assert page.locator(".seat input").count() == 4
+
+        # Players who type the same name get Roman numerals ("Ada I", "Ada II"); a unique name is left alone.
+        page.locator(".seat .btn").last.tap()
+        for i, n in enumerate(["Ada", "ada", "Ben"]):
+            page.locator(".seat input").nth(i).fill(n)
+        go(page)  # begin (three players: round one names all three)
+        versus = page.locator(".versus").text_content()
+        assert re.search(r"\bAda I\b", versus) and re.search(r"\bada II\b", versus) and "Ben" in versus, f"shared names should be numbered: {versus!r}"
 
         wide = browser.new_context(viewport={"width": 1100, "height": 900}).new_page()
         wide.goto(URL)

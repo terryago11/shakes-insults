@@ -1,21 +1,24 @@
 # Insult Duel
 
-A Shakespearean insult game for three to ten people and one phone. Two players trade insults
+A Shakespearean insult game for three to six people and one phone. Two players trade insults
 built from Shakespeare-style words ("Thou artless, reeling-ripe hedge-pig!"). Another player
 judges who won. Everyone takes turns.
 
 ## How to play
 
-1. Gather three to ten people. Hand the phone around when asked.
-2. Type everyone's name and choose how many rounds (at least three).
-3. Each round the game names two duelists and a judge, and the roles rotate so everyone gets
-   a turn at both. Each duelist, in turn, builds an insult in secret by tapping one word from each of the three
+1. Gather three to six people. Hand the phone around when asked.
+2. Type everyone's name. If two people share a name they become "Ada I" and "Ada II".
+3. The game plans the whole contest. Each round it names two duelists and a judge, and the roles
+   rotate. Everyone duels the same number of times (twice with three players, three times with
+   four or six, twice with five), so a game is 3, 6, 5 or 9 rounds for three, four, five or six
+   players.
+4. Each duelist, in turn, builds an insult in secret by tapping one word from each of the three
    columns. The columns are shuffled differently for each player, and there is no random button.
-4. When both are ready, a countdown runs: **III, II, I, SPEAK!** Both duelists say their insult
+5. When both are ready, a countdown runs: **III, II, I, SPEAK!** Both duelists say their insult
    aloud at the same time.
-5. The judge picks the winner of the round, or calls it a draw. A win is one point for the
-   winning duelist (the judge scores nothing).
-6. Scores add up over the whole game. After the last round the highest score wins. Equal top
+6. The judge picks the winner of the round, or calls it a draw. A win is two points. A draw is
+   one point for each duelist. The judge scores nothing that round.
+7. Scores add up over the whole game. After the last round the highest score wins. Equal top
    scores are a tie.
 
 ## Try it
@@ -38,7 +41,7 @@ Words, text and settings are plain files, so you can re-skin it without touching
 | To change | Edit |
 |-----------|------|
 | Any text players see (titles, buttons, the countdown) | `config/text.js` |
-| Player and round limits, countdown speed, name memory | `config/settings.js` |
+| Player limits, duels per player, points, countdown speed, name memory | `config/settings.js` |
 | The words | `packs/*.js` (see below) |
 | Colours and fonts | the variables at the top of `style.css` |
 

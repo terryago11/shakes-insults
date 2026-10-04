@@ -47,13 +47,17 @@
     }
   }
 
-  // state: names (one per player, in seat order), scores (same order), plan (G.planRounds: who duels
-  // and who judges each round), round (1-based), picks (the two duelists' secret picks, by slot).
+  // state: names (one per player, in seat order, made unique), entered (the names as typed, for the
+  // setup screen), scores (same order), plan (G.planRounds: who duels and who judges each round;
+  // one round per duel, so its length is the number of rounds), round (1-based), picks (the two
+  // duelists' secret picks, by slot).
   let state = null;
   const match = () => state.plan[state.round - 1];
   const duelist = (slot) => state.names[match().duelists[slot]]; // slot 0 or 1
   const judge = () => state.names[match().judge];
   const seats = () => state.names.map((_, i) => i);
+  const points = () => ({ win: S.pointsForWin, draw: S.pointsForDraw });
+  const word = (n) => G.nth(t("cardinals"), n); // 2 -> "Two"
   const rule = () => h("hr", { class: "rule" });
   const lede = (text) => h("p", { class: "lede" }, text);
   const btn = (label, onclick, cls) => h("button", { type: "button", class: "btn" + (cls ? " " + cls : ""), onclick }, label);
@@ -62,7 +66,7 @@
     return h(
       "p",
       { class: "kicker" },
-      t("round", { ordinal: G.nth(t("ordinals"), state.round), total: G.nth(t("cardinals"), state.rounds) })
+      t("round", { ordinal: G.nth(t("ordinals"), state.round), total: word(state.plan.length) })
     );
   }
 
@@ -79,7 +83,7 @@
   function screenSetup(prev) {
     const packIds = Object.keys(G.packs);
     const defaultName = (n) => t("defaultName", { n });
-    const names = (prev ? prev.names : loadNames() || Array.from({ length: S.minPlayers }, (_, i) => defaultName(i + 1))).slice();
+    const names = (prev ? prev.entered : loadNames() || Array.from({ length: S.minPlayers }, (_, i) => defaultName(i + 1))).slice();
     let inputs = [];
     const fields = h("div", { class: "fields" });
     const addSeat = btn(t("setup.addPlayer"), () => {
@@ -111,7 +115,6 @@
     }
     renderSeats();
 
-    const roundsInput = h("input", { type: "number", inputmode: "numeric", min: S.minRounds, max: S.maxRounds, value: prev ? prev.rounds : S.defaultRounds });
     const packSel = h(
       "select",
       {},
@@ -125,22 +128,21 @@
       lede(t("setup.lede")),
       fields,
       addSeat,
-      h("label", {}, t("setup.rounds", { min: S.minRounds }), roundsInput),
       packIds.length > 1 ? h("label", {}, t("setup.pack"), packSel) : null,
       btn(t("setup.start"), () => {
         syncNames();
-        const finalNames = names.map((n, i) => n.trim() || defaultName(i + 1));
-        const rounds = G.clampRounds(roundsInput.value, S.minRounds, S.maxRounds, S.defaultRounds);
+        const entered = names.map((n, i) => n.trim() || defaultName(i + 1));
+        const finalNames = G.disambiguate(entered, (name, k) => t("setup.duplicate", { name, roman: G.nth(t("romans"), k) }));
         state = {
           names: finalNames,
-          rounds,
+          entered,
           packId: packSel.value || packIds[0],
           round: 1,
           scores: finalNames.map(() => 0),
-          plan: G.planRounds(finalNames.length, rounds),
+          plan: G.planRounds(finalNames.length, G.duelsEach(finalNames.length, S.duelsPerPlayer)),
           picks: [null, null],
         };
-        saveNames(finalNames);
+        saveNames(entered);
         screenHandoff(0);
       })
     );
@@ -279,8 +281,8 @@
 
   // winnerIdx: the winning player's seat, or null for a draw.
   function award(winnerIdx) {
-    state.scores = G.awardPoint(state.scores, winnerIdx);
-    if (state.round >= state.rounds) screenFinal();
+    state.scores = G.scoreRound(state.scores, match().duelists, winnerIdx, points());
+    if (state.round >= state.plan.length) screenFinal();
     else screenScores(winnerIdx);
   }
 
@@ -296,7 +298,13 @@
   function screenScores(winnerIdx) {
     show(
       roundKicker(),
-      h("h2", {}, winnerIdx === null ? t("scores.draw") : t("scores.title", { name: state.names[winnerIdx] })),
+      h(
+        "h2",
+        {},
+        winnerIdx === null
+          ? t("scores.draw", { points: word(S.pointsForDraw) })
+          : t("scores.title", { points: word(S.pointsForWin), name: state.names[winnerIdx] })
+      ),
       scoreboard(seats()),
       btn(t("scores.next"), () => {
         state.round += 1;
@@ -322,7 +330,7 @@
         "div",
         { class: "btns" },
         btn(t("final.again"), () => {
-          state = { ...state, round: 1, scores: state.names.map(() => 0), plan: G.planRounds(state.names.length, state.rounds), picks: [null, null] };
+          state = { ...state, round: 1, scores: state.names.map(() => 0), plan: G.planRounds(state.names.length, G.duelsEach(state.names.length, S.duelsPerPlayer)), picks: [null, null] };
           screenHandoff(0);
         }),
         btn(t("final.change"), () => screenSetup(state), "alt")
