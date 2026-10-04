@@ -8,10 +8,9 @@ judges who won. Everyone takes turns.
 
 1. Gather three to six people. Hand the phone around when asked.
 2. Type everyone's name. If two people share a name they become "Ada I" and "Ada II".
-3. The game plans the whole contest. Each round it names two duelists and a judge, and the roles
-   rotate. Everyone duels the same number of times (twice with three players, three times with
-   four or six, twice with five), so a game is 3, 6, 5 or 9 rounds for three, four, five or six
-   players.
+3. Each round the game names two duelists and a judge; the roles rotate. Everyone duels the
+   same number of times (2 or 3), so a game is 3, 6, 5 or 9 rounds for three, four, five or
+   six players.
 4. Each duelist, in turn, builds an insult in secret by tapping one word from each of the three
    columns. The columns are shuffled differently for each player, and there is no random button.
 5. When both are ready, a countdown runs: **III, II, I, SPEAK!** Both duelists say their insult
