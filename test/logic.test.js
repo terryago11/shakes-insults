@@ -14,6 +14,7 @@ function loadScript(file) {
 }
 loadScript("config/text.js");
 loadScript("config/settings.js");
+loadScript("config/sound.js");
 for (const f of fs.readdirSync(path.join(root, "packs")).filter((n) => n.endsWith(".js"))) {
   loadScript(path.join("packs", f));
 }
@@ -348,4 +349,42 @@ test("link preview: the static <meta> tags match the text config, and the image 
 test("the spoken countdown has a word for every step of the visual one", () => {
   assert.strictEqual(G.text.countdownSpoken.length, G.text.countdown.length);
   assert.ok(G.text.countdownSpoken.every((w) => typeof w === "string" && w.trim() !== ""));
+});
+
+test("parsePrefs takes real booleans from storage and defaults everything else", () => {
+  const defaults = { sound: true, vibration: false };
+  assert.deepStrictEqual(G.parsePrefs('{"sound":false,"vibration":true}', defaults), { sound: false, vibration: true });
+  assert.deepStrictEqual(G.parsePrefs('{"sound":false}', defaults), { sound: false, vibration: false }, "a missing switch takes its default");
+  for (const bad of [null, "", "nope", "[]", "42", '{"sound":"yes","vibration":1}', '{"sound":null}']) {
+    assert.deepStrictEqual(G.parsePrefs(bad, defaults), defaults, `should ignore ${bad}`);
+  }
+});
+
+test("sound cues: every cue is well formed, used by the game, and the countdown ones fit in a step", () => {
+  const { cues, volume } = G.sounds;
+  assert.ok(volume > 0 && volume <= 1);
+  const waves = ["sine", "triangle", "square", "sawtooth"];
+  for (const [name, cue] of Object.entries(cues)) {
+    assert.ok(Array.isArray(cue.notes) && cue.notes.length > 0, `${name}: needs notes`);
+    for (const n of cue.notes) {
+      assert.ok(n.freq >= 40 && n.freq <= 8000, `${name}: freq ${n.freq}`);
+      assert.ok(n.at >= 0 && n.dur > 0 && n.at + n.dur <= 1.5, `${name}: timing ${n.at}+${n.dur}`);
+      if (n.to !== undefined) assert.ok(n.to >= 40 && n.to <= 8000, `${name}: glide target ${n.to}`);
+      if (n.gain !== undefined) assert.ok(n.gain > 0 && n.gain <= 1, `${name}: gain ${n.gain}`);
+      if (n.attack !== undefined) assert.ok(n.attack > 0 && n.attack < n.dur, `${name}: attack ${n.attack}`);
+      if (n.detune !== undefined) assert.ok(Math.abs(n.detune) <= 100, `${name}: detune ${n.detune}`);
+      if (n.filter) assert.ok(n.filter.freq >= 100 && n.filter.freq <= 12000 && (n.filter.to === undefined || (n.filter.to >= 100 && n.filter.to <= 12000)), `${name}: filter ${JSON.stringify(n.filter)}`);
+      if (!n.noise) assert.ok(waves.includes(n.wave || "sine"), `${name}: wave ${n.wave}`);
+    }
+    assert.ok(Array.isArray(cue.vibrate) && cue.vibrate.length > 0 && cue.vibrate.every((ms) => Number.isInteger(ms) && ms > 0 && ms <= 500), `${name}: vibration pattern`);
+  }
+  // The cues app.js plays are exactly the ones defined (every string literal on a `.cue(` line).
+  const app = fs.readFileSync(path.join(root, "src", "app.js"), "utf8");
+  const used = new Set(app.split("\n").filter((line) => line.includes("audio.cue(")).flatMap((line) => [...line.matchAll(/"(\w+)"/g)].map((m) => m[1])));
+  assert.deepStrictEqual([...used].sort(), Object.keys(cues).sort());
+  // A countdown step lasts countdownStepMs: the tick and go cues must finish well inside it.
+  for (const name of ["tick", "go"]) {
+    const end = Math.max(...cues[name].notes.map((n) => n.at + n.dur)) * 1000;
+    assert.ok(end < G.settings.countdownStepMs, `${name} lasts ${end}ms, longer than a countdown step`);
+  }
 });

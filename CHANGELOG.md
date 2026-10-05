@@ -4,6 +4,7 @@ Newest first.
 
 ## Unreleased
 
+- **Sound and vibration**: stage sounds synthesized in the browser (no audio files): a kettle-drum beat for each count, a trumpet flourish and side drum on "SPEAKE!", a tabor tap when an insult is locked in, a quill scratch for a point, two drum beats for a draw, trumpets and a drum roll for the final. Phones that support it also vibrate (Android only; iPhones cannot). Two switches on the setup screen turn each off, play a sample when switched on, and are remembered on the device; the vibration switch is hidden where vibration is unavailable. Cues are in `config/sound.js`, the engine in `src/sound.js`, and nothing audible reveals a pick.
 - **Docs audit**: roadmap cleaned up (shipped and moot items removed, real-device note updated), `CLAUDE.md` API list and contrast rule corrected, README and `SECURITY.md` list the accessibility audit tooling, design notes describe the tally marks, and `docs/maintaining.md` gains a release checklist.
 
 ## 0.3.1 — 2026-10-05

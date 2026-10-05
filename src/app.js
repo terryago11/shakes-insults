@@ -57,6 +57,27 @@
     }
   }
 
+  // The sound and vibration switches are remembered the same way (and equally optional).
+  const prefsDefaults = { sound: S.soundDefault, vibration: S.vibrationDefault };
+  function loadPrefs() {
+    try {
+      return G.parsePrefs(S.prefsStorageKey ? localStorage.getItem(S.prefsStorageKey) : null, prefsDefaults);
+    } catch (e) {
+      return { ...prefsDefaults };
+    }
+  }
+
+  function savePrefs() {
+    try {
+      if (S.prefsStorageKey) localStorage.setItem(S.prefsStorageKey, JSON.stringify(prefs));
+    } catch (e) {
+      /* remembering is a convenience; ignore */
+    }
+  }
+
+  const prefs = loadPrefs();
+  G.audio.set(prefs.sound, prefs.vibration);
+
   // state: names (one per player, in seat order, made unique), entered (the names as typed, for the
   // setup screen), scores (same order), plan (G.planRounds: who duels and who judges each round;
   // one round per duel, so its length is the number of rounds), round (1-based), picks (the two
@@ -125,6 +146,27 @@
     }
     renderSeats();
 
+    // On/off switches for sound and vibration. Switching one on plays a sample so players can tell it works.
+    function makeSwitch(key, label) {
+      const status = h("span", { class: "state", "aria-hidden": "true" });
+      const button = h("button", { type: "button", class: "btn alt switch", role: "switch" }, h("span", {}, label), status);
+      const paint = () => {
+        button.setAttribute("aria-checked", String(prefs[key]));
+        status.textContent = prefs[key] ? t("setup.on") : t("setup.off");
+      };
+      button.addEventListener("click", () => {
+        prefs[key] = !prefs[key];
+        G.audio.set(prefs.sound, prefs.vibration);
+        savePrefs();
+        paint();
+        if (prefs[key]) G.audio.cue("tick");
+      });
+      paint();
+      return button;
+    }
+    // Vibration is hidden where the browser cannot do it (iPhones), so there is no dead switch.
+    const switches = h("div", { class: "toggles" }, makeSwitch("sound", t("setup.sound")), G.audio.canVibrate() ? makeSwitch("vibration", t("setup.vibration")) : null);
+
     const packSel = h(
       "select",
       {},
@@ -138,6 +180,7 @@
       lede(t("setup.lede")),
       fields,
       addSeat,
+      switches,
       packIds.length > 1 ? h("label", {}, t("setup.pack"), packSel) : null,
       btn(t("setup.start"), () => {
         syncNames();
@@ -209,6 +252,7 @@
     }
 
     function onLock() {
+      G.audio.cue("imprint");
       state.picks[i] = chosen.slice();
       if (i === 0) screenHandoff(1);
       else screenReady();
@@ -309,6 +353,7 @@
       const last = n === labels.length - 1;
       big.textContent = labels[n];
       say.textContent = spoken[n];
+      G.audio.cue(last ? "go" : "tick");
       big.classList.toggle("go", last);
       await sleep(last ? S.countdownLastMs : S.countdownStepMs);
     }
@@ -385,6 +430,7 @@
   }
 
   function screenScores(winnerIdx) {
+    G.audio.cue(winnerIdx === null ? "draw" : "point");
     show(
       roundKicker(),
       h(
@@ -404,6 +450,7 @@
   }
 
   function screenFinal() {
+    G.audio.cue("fanfare");
     const top = G.leaders(state.scores);
     const ranked = seats().sort((x, y) => state.scores[y] - state.scores[x]); // stable: ties keep seat order
     show(

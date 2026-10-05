@@ -28,6 +28,16 @@ how early printed sheets were actually put together.
    the Britannica article, which does not discuss orthography. Pack names and the credit lines
    are left in plain modern English on purpose (attribution should be unambiguous).
 
+## Sound
+
+The sounds belong to the stage the insults come from: a kettle-drum beat for each count, a trumpet
+flourish on the go word, a tap of the side drum when an insult is locked in, a quill scratch for a
+point, two level drum beats for a draw, and trumpets over a drum roll to end. They are synthesized
+in the browser (a sawtooth through an opening low-pass filter reads as brass; noise bands make the
+side drum and the quill), so there are no audio files to ship or license. Cues mark moments and
+never choices, so they cannot give away a secret pick. The recipes are by ear, from general
+knowledge of how such sounds are built, not from a source.
+
 ## Scores as tally marks
 
 Scores are not numerals but strokes scratched on a wall: four vertical marks with the fifth drawn

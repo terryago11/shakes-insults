@@ -29,8 +29,13 @@ Or run it yourself, with no install and no internet: download or clone this fold
 
 It was built for phones. If something looks wrong on yours, please say so.
 
-The game remembers the names on your device so you don't retype them. It sends nothing
-anywhere and uses no cookies or tracking.
+The game remembers the names, and your sound and vibration choices, on your device so you don't
+set them again. It sends nothing anywhere and uses no cookies or tracking.
+
+There are sounds in the manner of the old stage: a drumbeat for each count, a trumpet flourish on
+"SPEAKE!", a tap of the side drum when an insult is locked in, a quill scratch for each point, and
+a fanfare at the end. Both sound and vibration can be switched off on the first screen. Vibration
+only works on Android phones; iPhones do not let web pages vibrate, so that switch is not shown there.
 
 ## Change it
 
@@ -40,6 +45,7 @@ Words, text and settings are plain files, so you can re-skin it without touching
 |-----------|------|
 | Any text players see (titles, buttons, the countdown) | `config/text.js` |
 | Player limits, duels per player, points, countdown speed, name memory | `config/settings.js` |
+| The sounds and vibration patterns (all synthesized, no audio files) | `config/sound.js` |
 | The words | `packs/*.js` (see below) |
 | Colours and fonts | the variables at the top of `style.css` |
 

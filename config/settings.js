@@ -7,6 +7,9 @@ InsultGame.settings = {
   pointsForDraw: 1, // to each duelist when the judge calls a draw
   countdownStepMs: 800, // time each countdown word is shown
   countdownLastMs: 500, // time the final "go" word is shown
+  soundDefault: true, // sound and vibration start switched on; players can turn them off on the setup screen
+  vibrationDefault: true,
+  prefsStorageKey: "shakes-insults.prefs", // where those two switches are remembered on this device; "" turns remembering off
   nameMaxLength: 24, // longest player name (also the limit on the setup inputs)
   namesStorageKey: "shakes-insults.names", // where the player names are remembered on this device; set to "" to turn remembering off
 };
