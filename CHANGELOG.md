@@ -2,7 +2,7 @@
 
 Newest first.
 
-## Unreleased
+## 0.3.1 — 2026-10-05
 
 - **Accessibility pass** (checked with axe-core, which now reports no violations on any screen, and keyboard tests; not yet with real screen readers):
   - **Screen changes are announced**: every screen has one level-one heading and focus moves to it when the screen changes (it used to drop to the page, leaving keyboard users at the top and screen readers silent). Column and player headings are level two. Keeping your place also applies after striking out a player.
