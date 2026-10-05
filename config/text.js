@@ -42,6 +42,10 @@ InsultGame.text = {
     // Two players who typed the same name become "Ada I" and "Ada II" ({roman} is the numeral).
     duplicate: "{name} {roman}",
     pack: "The Word Banke",
+    sound: "Sound",
+    vibration: "Vibration",
+    on: "On",
+    off: "Off",
     start: "Begin the Contention",
   },
 
@@ -96,6 +100,6 @@ InsultGame.text = {
     tie: "A Tie between {names}. Their Tongues are equally vile.",
     nameSeparator: ", ",
     again: "Play againe",
-    change: "Alter the Setup",
+    change: "Changeth the Setup",
   },
 };

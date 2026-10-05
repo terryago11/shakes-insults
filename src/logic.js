@@ -117,6 +117,19 @@
     return Math.min(players - 1, wanted);
   }
 
+  // The sound and vibration switches, read back from storage. Storage is untrusted, so each
+  // switch must be a real true/false, otherwise it takes its default.
+  function parsePrefs(raw, defaults) {
+    let data = null;
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      /* unreadable: use the defaults */
+    }
+    const pick = (key) => (data && typeof data === "object" && typeof data[key] === "boolean" ? data[key] : defaults[key]);
+    return { sound: pick("sound"), vibration: pick("vibration") };
+  }
+
   // Plans a whole game: `players` players (3 or more) who each duel exactly `duels` times, no pair
   // meeting twice. Returns [{ duelists: [a, b], judge }, ...] with player indexes (one entry per
   // round); the judge is never a duelist. Duel counts stay level while the game goes on and
@@ -240,7 +253,7 @@
     return list[n - 1] !== undefined ? list[n - 1] : String(n);
   }
 
-  const api = { packs, shuffle, wordText, registerPack, resolveColumns, buildInsult, validatePicks, scoreRound, parseSavedNames, disambiguate, leaders, leader, duelsEach, planRounds, makeT, nth };
+  const api = { packs, shuffle, wordText, registerPack, resolveColumns, buildInsult, validatePicks, scoreRound, parseSavedNames, parsePrefs, disambiguate, leaders, leader, duelsEach, planRounds, makeT, nth };
   root.InsultGame = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);

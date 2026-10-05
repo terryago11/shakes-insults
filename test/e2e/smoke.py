@@ -78,12 +78,19 @@ def go(page):
     page.locator("main .btn").last.tap()
 
 
-def pick(page, picks):
-    """Tap one word in each column; return the chosen words."""
-    words = []
-    for c, k in enumerate(picks):
-        words.append(word(page, c, k).locator(".txt").inner_text())
-        word(page, c, k).tap()
+def pick(page, picks, click=False):
+    """Choose one word in each column (tap, or click on desktop); return the chosen words."""
+    def choose(c, k):
+        target = word(page, c, k)
+        text = target.locator(".txt").inner_text()
+        target.click() if click else target.tap()
+        return text
+
+    words = [choose(c, k) for c, k in enumerate(picks)]
+    # Columns I and II draw on the same pool of words and are shuffled at random, so now and then the same
+    # word turns up in both and the game (rightly) will not lock it in. Choose another word in column II.
+    if page.locator(".bar .btn").is_disabled():
+        words[1] = choose(1, picks[1] + 7)
     return words
 
 
@@ -97,6 +104,41 @@ def who_is_in(text, players):
 
 def read_scoreboard(page):
     return [(el.locator("span").text_content(), el.locator(".tally").get_attribute("data-points")) for el in page.locator(".score").all()]
+
+
+# A stand-in for the Web Audio API and navigator.vibrate that records what the game asks for (a headless
+# browser cannot be listened to). `started` counts every tone or noise burst begun.
+AUDIO_STUB = """
+window.__cues = { contexts: 0, started: 0, vibrations: [] };
+const part = () => ({ connect() {}, start() { window.__cues.started++; }, stop() {}, type: '', buffer: null, detune: { value: 0 },
+  frequency: { setValueAtTime() {}, exponentialRampToValueAtTime() {}, value: 0 }, Q: { value: 0 } });
+window.AudioContext = class {
+  constructor() { window.__cues.contexts++; this.state = 'running'; this.currentTime = 0; this.sampleRate = 8000; this.destination = {}; }
+  resume() { this.state = 'running'; return Promise.resolve(); }
+  createGain() { return { connect() {}, gain: { setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {} } }; }
+  createOscillator() { return part(); }
+  createBufferSource() { return part(); }
+  createBiquadFilter() { return part(); }
+  createBuffer() { return { getChannelData() { return new Float32Array(8); } }; }
+};
+"""
+WITH_VIBRATION = AUDIO_STUB + "navigator.vibrate = (pattern) => { window.__cues.vibrations.push(pattern); return true; };"
+WITHOUT_VIBRATION = AUDIO_STUB + "Object.defineProperty(navigator, 'vibrate', { value: undefined, configurable: true });"
+
+
+def cues(page):
+    return page.evaluate("window.__cues")
+
+
+def play_to_reveal(page):
+    """Three default players: begin, both duelists pick and lock in, run the countdown, reach the reveal."""
+    page.locator("main .btn").last.click()  # begin
+    for picks in ((0, 1, 2), (5, 4, 3)):
+        page.locator("main .btn").last.click()  # hand over
+        pick(page, picks, click=True)
+        page.locator(".bar .btn").click()  # lock in
+    page.locator("main .btn").last.click()  # begin the count
+    page.wait_for_selector(".insult", timeout=8000)
 
 
 def main():
@@ -287,6 +329,62 @@ def main():
         kb.keyboard.press("End")
         assert kb.evaluate("document.activeElement === [...document.querySelectorAll('.col')[1].querySelectorAll('.word')].pop()"), "End should go to the last word"
         kb.close()
+
+        # Sound and vibration. Nothing plays before a tap; the cues fire at the right moments; the
+        # switches turn them off, are remembered, and vibration's switch is absent where it cannot work.
+        snd = browser.new_context(viewport={"width": 1100, "height": 900})
+        snd.add_init_script(WITH_VIBRATION)
+        page_snd = snd.new_page()
+        page_snd.goto(URL)
+        assert cues(page_snd)["contexts"] == 0, "no audio context may be created before the first tap"
+        switches = page_snd.locator("[role=switch]")
+        assert switches.count() == 2 and all(switches.nth(i).get_attribute("aria-checked") == "true" for i in range(2)), "sound and vibration start on"
+        audit(page_snd, "setup with switches", focus=False)
+        before = cues(page_snd)["started"]
+        page_snd.locator("main .btn").last.click()  # every button press makes a sound (and a light buzz)
+        got = cues(page_snd)
+        assert got["contexts"] == 1 and got["started"] > before and got["vibrations"][-1] == [10], f"a button press should tap and buzz lightly: {got}"
+        for picks in ((0, 1, 2), (5, 4, 3)):
+            page_snd.locator("main .btn").last.click()  # hand over
+            before = cues(page_snd)["started"]
+            word(page_snd, 0, picks[0]).click()
+            got = cues(page_snd)
+            assert got["started"] > before and got["vibrations"][-1] == [8], f"picking a word makes the soft tap (the same for every word): {got}"
+            pick(page_snd, picks, click=True)  # (re-picks everything, avoiding a duplicate word)
+            page_snd.locator(".bar .btn").click()  # lock in: the tabor, not the plain tap
+            assert cues(page_snd)["vibrations"][-1] == [25], "locking in has its own cue"
+        page_snd.locator("main .btn").last.click()  # begin the count
+        page_snd.wait_for_selector(".insult", timeout=8000)
+        buzzes = [v for v in cues(page_snd)["vibrations"] if v not in ([10], [8])]  # leave out the button taps
+        assert buzzes == [[25], [25], [35], [35], [35], [160]], f"lock-ins, three drum beats, then the trumpet: {buzzes}"
+        before = cues(page_snd)["started"]
+        page_snd.locator(".btns .btn").nth(0).click()  # a winner: the trumpet flourish for a win
+        got = cues(page_snd)
+        assert got["started"] >= before + 6 and got["vibrations"][-1] == [30, 40, 30], f"a win should sound a trumpet flourish and buzz: {got}"
+        snd.close()
+
+        mute = browser.new_context(viewport={"width": 1100, "height": 900})
+        mute.add_init_script(WITH_VIBRATION)
+        page_mute = mute.new_page()
+        page_mute.goto(URL)
+        for i in range(2):
+            page_mute.locator("[role=switch]").nth(i).click()
+        assert [page_mute.locator("[role=switch]").nth(i).get_attribute("aria-checked") for i in range(2)] == ["false", "false"]
+        page_mute.reload()
+        assert [page_mute.locator("[role=switch]").nth(i).get_attribute("aria-checked") for i in range(2)] == ["false", "false"], "the switches should be remembered"
+        play_to_reveal(page_mute)
+        got = cues(page_mute)
+        assert got["started"] == 0 and got["vibrations"] == [], f"with both switched off nothing may play or buzz: {got}"
+        page_mute.locator("[role=switch]").count()
+        mute.close()
+
+        quiet = browser.new_context(viewport={"width": 1100, "height": 900})
+        quiet.add_init_script(WITHOUT_VIBRATION)
+        page_quiet = quiet.new_page()
+        page_quiet.goto(URL)
+        assert page_quiet.locator("[role=switch]").count() == 1, "without vibration support only the sound switch is shown"
+        quiet.close()
+
         shot(wide, "6-wide-pick")
         assert wide.locator(".tab").first.is_hidden(), "column tabs are phone-only"
 

@@ -57,6 +57,27 @@
     }
   }
 
+  // The sound and vibration switches are remembered the same way (and equally optional).
+  const prefsDefaults = { sound: S.soundDefault, vibration: S.vibrationDefault };
+  function loadPrefs() {
+    try {
+      return G.parsePrefs(S.prefsStorageKey ? localStorage.getItem(S.prefsStorageKey) : null, prefsDefaults);
+    } catch (e) {
+      return { ...prefsDefaults };
+    }
+  }
+
+  function savePrefs() {
+    try {
+      if (S.prefsStorageKey) localStorage.setItem(S.prefsStorageKey, JSON.stringify(prefs));
+    } catch (e) {
+      /* remembering is a convenience; ignore */
+    }
+  }
+
+  const prefs = loadPrefs();
+  G.audio.set(prefs.sound, prefs.vibration);
+
   // state: names (one per player, in seat order, made unique), entered (the names as typed, for the
   // setup screen), scores (same order), plan (G.planRounds: who duels and who judges each round;
   // one round per duel, so its length is the number of rounds), round (1-based), picks (the two
@@ -70,7 +91,8 @@
   const word = (n) => G.nth(t("cardinals"), n); // 2 -> "Two"
   const rule = () => h("hr", { class: "rule" });
   const lede = (text) => h("p", { class: "lede" }, text);
-  const btn = (label, onclick, cls) => h("button", { type: "button", class: "btn" + (cls ? " " + cls : ""), onclick }, label);
+  // `cue` overrides the sound the press makes ("none" when the screen it leads to plays its own cue).
+const btn = (label, onclick, cls, cue) => h("button", { type: "button", class: "btn" + (cls ? " " + cls : ""), "data-cue": cue, onclick }, label);
 
   function roundKicker() {
     return h(
@@ -125,6 +147,27 @@
     }
     renderSeats();
 
+    // On/off switches for sound and vibration. The tap every button makes doubles as the sample, so
+    // players hear (or feel) that a switch just turned on works.
+    function makeSwitch(key, label) {
+      const status = h("span", { class: "state", "aria-hidden": "true" });
+      const button = h("button", { type: "button", class: "btn alt switch", role: "switch" }, h("span", {}, label), status);
+      const paint = () => {
+        button.setAttribute("aria-checked", String(prefs[key]));
+        status.textContent = prefs[key] ? t("setup.on") : t("setup.off");
+      };
+      button.addEventListener("click", () => {
+        prefs[key] = !prefs[key];
+        G.audio.set(prefs.sound, prefs.vibration);
+        savePrefs();
+        paint();
+      });
+      paint();
+      return button;
+    }
+    // Vibration is hidden where the browser cannot do it (iPhones), so there is no dead switch.
+    const switches = h("div", { class: "toggles" }, makeSwitch("sound", t("setup.sound")), G.audio.canVibrate() ? makeSwitch("vibration", t("setup.vibration")) : null);
+
     const packSel = h(
       "select",
       {},
@@ -138,6 +181,7 @@
       lede(t("setup.lede")),
       fields,
       addSeat,
+      switches,
       packIds.length > 1 ? h("label", {}, t("setup.pack"), packSel) : null,
       btn(t("setup.start"), () => {
         syncNames();
@@ -181,6 +225,7 @@
     const preview = h("p", { class: "preview", "aria-live": "polite" });
     const problem = h("p", { class: "problem", "aria-live": "polite" });
     const lock = btn(t("pick.imprint"), onLock); // refresh() disables it until every column is chosen
+    lock.dataset.cue = "imprint"
 
     function jump(c) {
       sections[c].scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "start" });
@@ -252,7 +297,7 @@
         words.map((w, k) => {
           const b = h(
             "button",
-            { type: "button", class: "word", "aria-pressed": "false", tabindex: k === 0 ? "0" : "-1", onclick: () => choose(c, w), onfocus: () => setStop(c, k) },
+            { type: "button", class: "word", "aria-pressed": "false", "data-cue": "pick", tabindex: k === 0 ? "0" : "-1", onclick: () => choose(c, w), onfocus: () => setStop(c, k) },
             h("span", { class: "mark", "aria-hidden": "true" }, t("marker")),
             h("span", { class: "txt" }, w)
           );
@@ -293,7 +338,7 @@
       h("h1", { class: "heading" }, t("ready.title")),
       rule(),
       lede(t("ready.lede", { judge: judge() })),
-      btn(t("ready.button"), runCountdown, "block")
+      btn(t("ready.button"), runCountdown, "block", "none")
     );
   }
 
@@ -309,6 +354,7 @@
       const last = n === labels.length - 1;
       big.textContent = labels[n];
       say.textContent = spoken[n];
+      G.audio.cue(last ? "go" : "tick");
       big.classList.toggle("go", last);
       await sleep(last ? S.countdownLastMs : S.countdownStepMs);
     }
@@ -325,8 +371,8 @@
       h("div", { class: "cards" }, card(0), card(1)),
       h("p", { class: "ask" }, t("reveal.ask", { judge: judge() })),
       h("div", { class: "btns" }, [
-        [0, 1].map((slot) => btn(t("reveal.wins", { name: duelist(slot) }), () => award(match().duelists[slot]), "block")),
-        btn(t("reveal.draw"), () => award(null), "block alt"),
+        [0, 1].map((slot) => btn(t("reveal.wins", { name: duelist(slot) }), () => award(match().duelists[slot]), "block", "none")),
+        btn(t("reveal.draw"), () => award(null), "block alt", "none"),
       ])
     );
   }
@@ -385,6 +431,7 @@
   }
 
   function screenScores(winnerIdx) {
+    G.audio.cue(winnerIdx === null ? "draw" : "win");
     show(
       roundKicker(),
       h(
@@ -404,6 +451,7 @@
   }
 
   function screenFinal() {
+    G.audio.cue("fanfare");
     const top = G.leaders(state.scores);
     const ranked = seats().sort((x, y) => state.scores[y] - state.scores[x]); // stable: ties keep seat order
     show(
@@ -426,6 +474,16 @@
       )
     );
   }
+
+  // Every button press makes a sound: "click" by default, or the cue named in the button's data-cue
+  // ("none" for buttons whose next screen plays its own cue: a second sound, and on Android a second
+  // vibrate() call, would cut the first one off).
+  // (This runs after a button's own handler, so a switch that has just been turned off is silent.)
+  document.addEventListener("click", (event) => {
+    const button = event.target instanceof Element ? event.target.closest("button") : null;
+    const name = button && !button.disabled ? button.dataset.cue || "click" : "none";
+    if (name !== "none") G.audio.cue(name);
+  });
 
   // Page chrome that has no markup of its own in index.html.
   document.title = t("documentTitle");

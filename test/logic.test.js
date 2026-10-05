@@ -14,6 +14,7 @@ function loadScript(file) {
 }
 loadScript("config/text.js");
 loadScript("config/settings.js");
+loadScript("config/sound.js");
 for (const f of fs.readdirSync(path.join(root, "packs")).filter((n) => n.endsWith(".js"))) {
   loadScript(path.join("packs", f));
 }
@@ -307,7 +308,7 @@ test("site build: the published copy has everything the page loads, and none of 
     ].filter((ref) => !/^(https?:|data:)/.test(ref));
     assert.ok(needed.length > 8, "expected scripts, a stylesheet and fonts to be referenced");
     for (const ref of needed) assert.ok(fs.existsSync(path.join(dest, ref)), `the published site is missing ${ref}`);
-    for (const f of ["index.html", "LICENSE", "fonts/OFL.txt", "social-preview.png"]) assert.ok(fs.existsSync(path.join(dest, f)), `missing ${f}`);
+    for (const f of ["index.html", "LICENSE", "fonts/OFL.txt", "social-preview.png", "favicon.svg", "favicon-32.png", "apple-touch-icon.png"]) assert.ok(fs.existsSync(path.join(dest, f)), `missing ${f}`);
     for (const f of ["reference", "test", "docs", "scripts", "package.json", "CLAUDE.md", ".github", ".git"]) {
       assert.ok(!fs.existsSync(path.join(dest, f)), `${f} must not be published`);
     }
@@ -348,4 +349,66 @@ test("link preview: the static <meta> tags match the text config, and the image 
 test("the spoken countdown has a word for every step of the visual one", () => {
   assert.strictEqual(G.text.countdownSpoken.length, G.text.countdown.length);
   assert.ok(G.text.countdownSpoken.every((w) => typeof w === "string" && w.trim() !== ""));
+});
+
+test("parsePrefs takes real booleans from storage and defaults everything else", () => {
+  const defaults = { sound: true, vibration: false };
+  assert.deepStrictEqual(G.parsePrefs('{"sound":false,"vibration":true}', defaults), { sound: false, vibration: true });
+  assert.deepStrictEqual(G.parsePrefs('{"sound":false}', defaults), { sound: false, vibration: false }, "a missing switch takes its default");
+  for (const bad of [null, "", "nope", "[]", "42", '{"sound":"yes","vibration":1}', '{"sound":null}']) {
+    assert.deepStrictEqual(G.parsePrefs(bad, defaults), defaults, `should ignore ${bad}`);
+  }
+});
+
+test("sound cues: every cue is well formed, used by the game, and the countdown ones fit in a step", () => {
+  const { cues, volume } = G.sounds;
+  assert.ok(volume > 0 && volume <= 1);
+  const waves = ["sine", "triangle", "square", "sawtooth"];
+  for (const [name, cue] of Object.entries(cues)) {
+    assert.ok(Array.isArray(cue.notes) && cue.notes.length > 0, `${name}: needs notes`);
+    for (const n of cue.notes) {
+      assert.ok(n.freq >= 40 && n.freq <= 8000, `${name}: freq ${n.freq}`);
+      assert.ok(n.at >= 0 && n.dur > 0 && n.at + n.dur <= 2, `${name}: timing ${n.at}+${n.dur}`);
+      if (n.to !== undefined) assert.ok(n.to >= 40 && n.to <= 8000, `${name}: glide target ${n.to}`);
+      if (n.gain !== undefined) assert.ok(n.gain > 0 && n.gain <= 1, `${name}: gain ${n.gain}`);
+      if (n.attack !== undefined) assert.ok(n.attack > 0 && n.attack < n.dur, `${name}: attack ${n.attack}`);
+      if (n.detune !== undefined) assert.ok(Math.abs(n.detune) <= 100, `${name}: detune ${n.detune}`);
+      if (n.release !== undefined) assert.ok(n.release > 0 && n.release <= n.dur, `${name}: release ${n.release}`);
+      if (n.filter) assert.ok(n.filter.freq >= 100 && n.filter.freq <= 12000 && (n.filter.to === undefined || (n.filter.to >= 100 && n.filter.to <= 12000)), `${name}: filter ${JSON.stringify(n.filter)}`);
+      if (!n.noise) assert.ok(waves.includes(n.wave || "sine"), `${name}: wave ${n.wave}`);
+    }
+    // Phone and laptop speakers barely reproduce bass, so every cue needs something above 300 Hz.
+    assert.ok(cue.notes.some((n) => n.noise || Math.max(n.freq, n.to || 0) >= 300 && (n.freq >= 300 || n.to >= 300)), `${name}: bass only, would be inaudible on small speakers`);
+    assert.ok(Array.isArray(cue.vibrate) && cue.vibrate.length > 0 && cue.vibrate.every((ms) => Number.isInteger(ms) && ms > 0 && ms <= 500), `${name}: vibration pattern`);
+  }
+  // The cues app.js plays are exactly the ones defined (every string literal on a `.cue(` line).
+  const app = fs.readFileSync(path.join(root, "src", "app.js"), "utf8");
+  const used = new Set([
+    ...app.split("\n").filter((line) => line.includes("audio.cue(")).flatMap((line) => [...line.matchAll(/"(\w+)"/g)].map((m) => m[1])),
+    ...[...app.matchAll(/"data-cue":\s*"(\w+)"/g)].map((m) => m[1]),
+    ...[...app.matchAll(/dataset\.cue\s*=\s*"(\w+)"/g)].map((m) => m[1]),
+    ...[...app.matchAll(/dataset\.cue\s*\|\|\s*"(\w+)"/g)].map((m) => m[1]), // the default tap
+  ]);
+  used.delete("none"); // a button can opt out of the default tap
+  assert.deepStrictEqual([...used].sort(), Object.keys(cues).sort());
+  // The tick must be over before the next count; the go trumpet may ring on into the reveal.
+  const endMs = (name) => Math.max(...cues[name].notes.map((n) => n.at + n.dur)) * 1000;
+  assert.ok(endMs("tick") < G.settings.countdownStepMs, `tick lasts ${endMs("tick")}ms, longer than a countdown step`);
+  assert.ok(endMs("go") <= 1500, "the go trumpet should not drag on past 1.5s");
+});
+
+test("icons: the page links an SVG favicon, a 32px PNG and an Apple touch icon, and the files are what they claim", () => {
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  for (const href of ["favicon.svg", "favicon-32.png", "apple-touch-icon.png"]) {
+    assert.ok(html.includes(`href="${href}"`), `index.html does not link ${href}`);
+    assert.ok(fs.existsSync(path.join(root, href)), `${href} is missing`);
+  }
+  assert.match(fs.readFileSync(path.join(root, "favicon.svg"), "utf8"), /<svg[^>]+viewBox=/);
+  const size = (file) => {
+    const png = fs.readFileSync(path.join(root, file));
+    assert.strictEqual(png.subarray(1, 4).toString(), "PNG", `${file} is not a PNG`);
+    return [png.readUInt32BE(16), png.readUInt32BE(20)];
+  };
+  assert.deepStrictEqual(size("favicon-32.png"), [32, 32]);
+  assert.deepStrictEqual(size("apple-touch-icon.png"), [180, 180]);
 });

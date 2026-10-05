@@ -113,6 +113,10 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
 }
 .btn.alt { background: transparent; color: var(--ink); border: 2px solid var(--ink); outline: none; box-shadow: 3px 3px 0 var(--red); text-shadow: inherit; }
 .btn.block { display: block; width: calc(100% - 6px); }
+.toggles { display: flex; flex-wrap: wrap; gap: 0 8px; margin: 4px 0 0; }
+.btn.switch { display: inline-flex; align-items: center; gap: 10px; }
+.btn.switch .state { text-decoration: underline; }
+.btn.switch[aria-checked="true"] { background: var(--ink); color: var(--paper); border: 3px double var(--paper); outline: 2px solid var(--ink); text-shadow: none; }
 .btn:disabled { opacity: 0.45; box-shadow: none; cursor: not-allowed; }
 .btns { display: flex; flex-wrap: wrap; }
 :focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }

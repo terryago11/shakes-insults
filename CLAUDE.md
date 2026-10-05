@@ -19,7 +19,7 @@ Regenerate the packs from the curated spreadsheet: `pip install openpyxl && pyth
 
 ## Stack
 
-Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dependencies, no backend, no network requests. The only storage is the player names in `localStorage` (wrapped in try/catch, validated by `parseSavedNames`; `namesStorageKey: ""` in `config/settings.js` turns it off). Local play on one device only; remote play is deliberately out of scope for now.
+Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dependencies, no backend, no network requests. The only storage is in `localStorage`: the player names and the sound/vibration switches (each wrapped in try/catch and validated by `parseSavedNames` / `parsePrefs`; `namesStorageKey` and `prefsStorageKey` set to `""` in `config/settings.js` turn them off). Local play on one device only; remote play is deliberately out of scope for now.
 
 ## Key Files
 
@@ -27,14 +27,17 @@ Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dep
 |------|---------|
 | `index.html` | Loads scripts in order: `src/logic.js`, `config/*.js`, `packs/full.js`, then `src/app.js`. Contains no player-facing text |
 | `config/text.js` | **All player-facing text** (titles, buttons, flavour copy, countdown, ordinals, footer). Edited to re-skin or translate |
-| `config/settings.js` | Player limits, duels per player, points for a win and a draw, countdown timing, name length, names storage key |
+| `config/settings.js` | Player limits, duels per player, points for a win and a draw, countdown timing, name length, sound/vibration defaults, storage keys |
+| `config/sound.js` | The cues (sound notes and vibration patterns), synthesized by `src/sound.js`; no audio files |
 | `packs/*.js` | **The word banks.** One file per pack, each calls `InsultGame.registerPack({...})`. The game loads only `full.js` (a test enforces it); `short.js` is a smaller list kept for tinkering. The setup screen shows a word-bank picker only if more than one pack is loaded |
-| `src/logic.js` | Pure game logic (`shuffle`, `wordText`, `registerPack`, the `packs` registry, `resolveColumns`, `buildInsult`, `validatePicks`, `scoreRound` (winner index, or null = draw), `parseSavedNames`, `disambiguate`, `leaders`/`leader`, `duelsEach`, `planRounds`) and text helpers (`makeT`, `nth`). No DOM. Exposed as `window.InsultGame` and `module.exports` |
+| `src/logic.js` | Pure game logic (`shuffle`, `wordText`, `registerPack`, the `packs` registry, `resolveColumns`, `buildInsult`, `validatePicks`, `scoreRound` (winner index, or null = draw), `parseSavedNames`, `parsePrefs`, `disambiguate`, `leaders`/`leader`, `duelsEach`, `planRounds`) and text helpers (`makeT`, `nth`). No DOM. Exposed as `window.InsultGame` and `module.exports` |
+| `src/sound.js` | Sound and vibration engine (Web Audio, `navigator.vibrate`): `InsultGame.audio.cue(name)`. Not pure; everything in it is optional and fails silently |
 | `src/app.js` | UI: screen-by-screen state machine (setup → handoff → pick → ready → countdown → reveal → scores/final) |
 | `style.css` | All styling, mobile-first; no `content:` strings |
 | `fonts/` | Bundled IM Fell woff2 files + `OFL.txt` (SIL OFL) + provenance note |
 | `reference/Insults.xlsx` | The curated word list (sheets `full` and `short`); the packs are generated from it |
 | `scripts/xlsx-to-pack.py` | Regenerates `short.js` and `full.js` from the spreadsheet |
+| `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png`, `scripts/make-icons.py` | The icons (a red slab T in the title page's drop-cap box). Edit `favicon.svg`, then run the script to regenerate the PNGs |
 | `social-preview.png`, `scripts/social-image.py` | The 1200x630 image shown when the site is shared (a screenshot of the title page); regenerate it with the script when the setup screen changes |
 | `test/logic.test.js` | Node tests: logic, pack lint, text-config checks, "no text in html/css" |
 | `test/e2e/smoke.py` | Phone-sized browser run of a full game (see Dev Commands); also asserts the accessibility behaviour below |
@@ -68,6 +71,7 @@ InsultGame.registerPack({
 - **Early-printing look, not modern graphic design.** Dense type, tight leading, narrow margins, heavy and light rules, unequal columns, red as a hand-applied accent slightly off-register, repeated printers' ornaments, a title-page structure. Do not "clean it up" toward even spacing, centred symmetry or generous whitespace. See `docs/design.md`.
 - **Column colours.** `.c1/.c2/.c3` set `--c` from `--c1/--c2/--c3` (red, blue, green in `style.css`); `hue(i)` in `app.js` applies the class (cycling for more than three columns). Colours must stay readable on the paper (4.5:1), and a picked word's text on its tint (it is darkened toward ink for that); they are not colour-blind-safe by owner's choice.
 - **Accessibility.** One `h1` per screen (`.heading`), with `h2`s (`.subheading`) beneath; `show()` moves focus to the new screen's heading (not on the very first screen). Word lists have one tab stop each (roving tabindex): arrows, Home/End and typing a letter move within a list. The countdown is spoken from `countdownSpoken` (the big numerals are `aria-hidden`). Tally marks have a label. Picked-word text is darkened toward ink so it keeps 4.5:1 on its tint. Decorative ornaments are `aria-hidden`. `smoke.py` asserts the h1, the focus move, the contrast and the keyboard behaviour; run `npm run test:a11y` after UI changes.
+- **Sound and vibration.** Cues live in `config/sound.js` and are played with `G.audio.cue("name")` (literal names: a test checks every cue is defined and used, well formed, has something above 300 Hz because small speakers cannot play bass, and that the count beat fits in one countdown step). Every button press makes the default `click` tap through one delegated listener in `app.js`; a button can name its own cue with `data-cue` (`pick` for words, `imprint` for locking in) or `"none"` when the screen it leads to plays its own cue (a second sound, and on Android a second `vibrate()` call, would cut the first off). Audio starts only after a tap or key press (browser rule), so the context is created on the first one. Cues mark moments, never choices: nothing may reveal what a player picked (every word makes the same tap). Vibration does not exist on iPhones, so its switch is hidden where `navigator.vibrate` is missing. The browser test stubs the audio and vibrate APIs to assert which cues fire and in what order, that nothing plays before a tap or when switched off, and the switches' memory.
 - **Awkward is allowed.** Do not tidy rough edges that are part of the printed look. Fix real defects only (overlap, unreadable text, tap targets under 44px, broken behaviour).
 - **Classic `<script>` tags, not ES modules.** Modules (and `fetch` of JSON) are blocked on `file://`, which would break double-click-to-run. Do not convert to modules or JSON packs without deciding to drop that.
 - **Fonts are bundled** in `fonts/` (no CDN, no network requests). Keep `OFL.txt` with them.
