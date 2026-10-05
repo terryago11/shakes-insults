@@ -52,8 +52,9 @@ verified.
 
 The game is static files and needs no server. It is published to GitHub Pages by
 `.github/workflows/pages.yml`, which runs `npm test`, copies only the files the game needs
-(`scripts/build-site.sh`: `index.html`, `style.css`, `LICENSE`, `fonts/` and every script
-`index.html` loads) and deploys that copy, so tests, docs and the reference spreadsheet are not on the site.
+(`scripts/build-site.sh`: `index.html`, `style.css`, `LICENSE`, the preview image and icons,
+`fonts/` and every script `index.html` loads) and deploys that copy, so tests, docs and the
+reference spreadsheet are not on the site.
 A unit test fails if the copy is missing anything the page loads or includes a repo-only file.
 
 - **(settings) One-time setup**: Settings, Pages, Build and deployment, Source = **GitHub
@@ -68,8 +69,10 @@ A unit test fails if the copy is missing anything the page loads or includes a r
   setup screen changes). Their address is absolute (`https://terryago11.github.io/shakes-insults/`),
   so update it if the site moves. Platforms cache previews: after changing the image, use their
   share debugger or wait for the cache to expire.
-- Pages serves over HTTPS. See `SECURITY.md` for what the game does and does not do (names
-  remembered locally only, no network requests).
+- **Icons**: `favicon.svg` is the source; `favicon-32.png` and `apple-touch-icon.png` come from
+  `scripts/make-icons.py`. All three are linked from `index.html` and published.
+- Pages serves over HTTPS. See `SECURITY.md` for what the game does and does not do (the names
+  and the sound and vibration switches are remembered locally only, no network requests).
 
 ## Releasing
 
@@ -82,6 +85,9 @@ A unit test fails if the copy is missing anything the page loads or includes a r
    Check that the tag points at the `main` commit and that `package.json` at the tag has the new
    version.
 4. The merge also redeploys the site (see Hosting); check the live page.
+
+Version numbers: a new player-facing feature is a minor bump (0.3.x to 0.4.0), fixes and polish a
+patch (0.3.0 to 0.3.1).
 
 ## CI
 
