@@ -1,22 +1,32 @@
 # Maintainer checklist
 
 Items marked **(settings)** are GitHub repository or account settings that cannot be changed from
-the code. The menu names are from general knowledge of GitHub and may have moved, so check
-GitHub's current documentation.
+the code. GitHub moves its menus around, so check its current documentation if a name below is
+missing. The repository is public (since 2026-10-05); several of these only exist for public
+repositories. Settings you can read back with `gh api repos/<owner>/<repo>` are marked as
+verified.
 
 ## Settings that back SECURITY.md
 
-- **(settings) Private vulnerability reporting**: enable it (Settings, then Code security).
-  `SECURITY.md` tells reporters to use the Security tab's "Report a vulnerability" button, which
-  only exists once this is on.
-- **(settings) Secret scanning and push protection**: enable both. They are available for public
-  repositories and catch accidentally committed keys.
+- **(settings) Private vulnerability reporting**: public repositories only. Settings, Security and
+  quality, Advanced Security, Private vulnerability reporting. `SECURITY.md` tells reporters to
+  use the Security tab's "Report a vulnerability" button, which only exists once this is on.
+  *On (verified).*
+- **(settings) Secret scanning and push protection**: Settings, Security and quality, Advanced
+  Security, Secret Protection; push protection is switched on alongside it. They catch
+  accidentally committed keys. *Both on (verified).*
 - **(settings) Dependabot alerts**: enable. The shipped game has no runtime dependencies and
   `package.json` has none at all, so there is nothing to alert on today; this covers future
-  tooling.
-- **(settings) Branch protection or a ruleset on `main`**: at least block force-pushes and
-  deletion. Requiring pull requests is optional for a solo project.
-- **Two-factor authentication** on the owning account.
+  tooling. *On (verified).*
+- **(settings) Code scanning (CodeQL)**: default setup, weekly, scanning JavaScript, Python and
+  GitHub Actions files. *On (verified).*
+- **(settings) A ruleset on `main`**: Settings, Rules, Rulesets, New ruleset, New branch ruleset;
+  enforcement Active; target the default branch. At least restrict deletions and block force
+  pushes. Optional extras: require status checks (`unit (20)` and `unit (22)` from CI) and
+  require a pull request before merging; leave the owner on the bypass list so a solo project
+  cannot lock itself out. *Not yet set up (verified: no rulesets, `main` unprotected).*
+- **Two-factor authentication** on the owning account. *Turned on by the owner (not verifiable
+  from the repository).*
 
 ## Good practice for commits
 
