@@ -7,7 +7,7 @@ Shipped work lives in [CHANGELOG.md](./CHANGELOG.md). Nothing below is committed
 - **Remember the word pack too** — names are already remembered; the same storage code could cover it.
 - **Publish the repo** — turn on the settings in `docs/maintaining.md` first.
 - **Browser test in CI** — add `npm run test:e2e` to the workflow (needs a browser install step).
-- **Static hosting** — publish via GitHub Pages (needs no build step).
+- **Static hosting** — the Pages workflow is in place; switch Settings, Pages, Source to "GitHub Actions", then add the live address to the README.
 
 ## Medium
 

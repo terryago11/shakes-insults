@@ -37,6 +37,8 @@ Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dep
 | `test/logic.test.js` | Node tests: logic, pack lint, text-config checks, "no text in html/css" |
 | `test/e2e/smoke.py` | Phone-sized browser run of a full game (see Dev Commands) |
 | `docs/design.md` | Visual design principles and their sources |
+| `scripts/build-site.sh` | Copies only the runtime files into a folder for publishing; the Pages workflow uses it, and a test checks it covers everything `index.html` and `style.css` load |
+| `.github/workflows/pages.yml` | Publishes that copy to GitHub Pages on pushes to `main` (needs Settings, Pages, Source = GitHub Actions) |
 | `.github/workflows/test.yml` | CI: `npm test` on Node 20 and 22 for pushes to `main` and pull requests (the e2e test is not in CI) |
 
 ## Word Pack Format

@@ -50,11 +50,22 @@ verified.
 
 ## Hosting
 
-The game is static files and needs no server. If hosted (for example GitHub Pages), serve it over
-HTTPS. See `SECURITY.md` for what it does and does not do (names remembered locally only, no
-network requests).
+The game is static files and needs no server. It is published to GitHub Pages by
+`.github/workflows/pages.yml`, which runs `npm test`, copies only the files the game needs
+(`scripts/build-site.sh`: `index.html`, `style.css`, `LICENSE`, `src/`, `config/`, `packs/`,
+`fonts/`) and deploys that copy, so tests, docs and the reference spreadsheet are not on the site.
+A unit test fails if the copy is missing anything the page loads or includes a repo-only file.
+
+- **(settings) One-time setup**: Settings, Pages, Build and deployment, Source = **GitHub
+  Actions**. Until that is set, the workflow's deploy step fails. After setting it, re-run the
+  workflow (Actions, pages, Run workflow) or push to `main`.
+- If you add a new top-level file or folder the game needs at runtime, add it to
+  `scripts/build-site.sh` (the test will tell you).
+- Pages serves over HTTPS. See `SECURITY.md` for what the game does and does not do (names
+  remembered locally only, no network requests).
 
 ## CI
 
 `.github/workflows/test.yml` runs `npm test` on Node 20 and 22 for pushes to `main` and pull
-requests. It does not run the browser test (`npm run test:e2e`).
+requests. It does not run the browser test (`npm run test:e2e`). The `pages` workflow (see
+Hosting) runs only on pushes to `main`, so a pull request does not exercise the deploy step.

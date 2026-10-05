@@ -2,6 +2,8 @@ const test = require("node:test");
 const assert = require("node:assert");
 const fs = require("node:fs");
 const path = require("node:path");
+const os = require("node:os");
+const { execFileSync } = require("node:child_process");
 
 const G = require("../src/logic.js");
 const root = path.join(__dirname, "..");
@@ -250,4 +252,25 @@ test("no player-facing text is hard-coded in index.html or style.css", () => {
   assert.doesNotMatch(html, /\s(title|alt|aria-label|placeholder)\s*=/i, "index.html has a text attribute (put it in config/text.js)");
   const css = fs.readFileSync(path.join(root, "style.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
   assert.ok(!/(^|[^-\w])content\s*:/.test(css), "style.css uses content: (text belongs in config/text.js)");
+});
+
+test("site build: the published copy has everything the page loads, and none of the repo-only files", () => {
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "insult-site-"));
+  try {
+    execFileSync("sh", [path.join(root, "scripts", "build-site.sh"), dest], { cwd: root });
+    const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+    const css = fs.readFileSync(path.join(root, "style.css"), "utf8");
+    const needed = [
+      ...[...html.matchAll(/\b(?:src|href)="([^"#]+)"/g)].map((m) => m[1]),
+      ...[...css.matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/g)].map((m) => m[1]),
+    ].filter((ref) => !/^(https?:|data:)/.test(ref));
+    assert.ok(needed.length > 8, "expected scripts, a stylesheet and fonts to be referenced");
+    for (const ref of needed) assert.ok(fs.existsSync(path.join(dest, ref)), `the published site is missing ${ref}`);
+    for (const f of ["index.html", "LICENSE", "fonts/OFL.txt"]) assert.ok(fs.existsSync(path.join(dest, f)), `missing ${f}`);
+    for (const f of ["reference", "test", "docs", "scripts", "package.json", "CLAUDE.md", ".github", ".git"]) {
+      assert.ok(!fs.existsSync(path.join(dest, f)), `${f} must not be published`);
+    }
+  } finally {
+    fs.rmSync(dest, { recursive: true, force: true });
+  }
 });
