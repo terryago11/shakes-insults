@@ -5,6 +5,10 @@
 InsultGame.text = {
   lang: "en",
   documentTitle: "A Most Notable Contention of Insults",
+  // Shown in link previews and search results. index.html repeats these in its <meta> tags
+  // (crawlers do not run scripts), and `npm test` fails if the two copies differ.
+  documentDescription: "A Shakespearean insult game for three to six players and one phone. Build thine insult by hand, speake it aloud on the count, and let the Judge decide.",
+  documentImageAlt: "The title page of the game: a printed broadside headed Contention of Insults.",
 
   // Decorative characters, repeated to make the printer's ornament strip.
   ornaments: "¶ § † ‡ ",
@@ -76,6 +80,8 @@ InsultGame.text = {
   },
 
   scores: {
+    // Read aloud for a player's tally marks ({points} is a digit).
+    tallyLabel: "{name}: {points} points",
     // {points} is a number word from `cardinals` ("Two"); the plural "Points" does not adapt if you change the scoring.
     title: "{points} Points to {name}",
     draw: "A Draw. {points} Point to each Duellist",

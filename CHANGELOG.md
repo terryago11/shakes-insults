@@ -2,8 +2,11 @@
 
 Newest first.
 
-## Unreleased
+## 0.3.0 — 2026-10-05
 
+- **Live on GitHub Pages**: https://terryago11.github.io/shakes-insults/ (the repository is now public).
+- **One word bank**: the game loads only the full list (`packs/full.js`), so there is no word-bank picker on the setup screen; `packs/short.js` stays in the repo as a smaller list for tinkering. The published site copies the scripts `index.html` loads, so unused packs are not published. A test keeps `index.html` to the full list.
+- **Docs and CI**: README links the live game; `actions/checkout` and `actions/setup-node` in the test workflow moved from v4 to v7.
 - **GitHub Pages workflow**: `.github/workflows/pages.yml` runs `npm test` and publishes only the files the game needs (`scripts/build-site.sh`) on pushes to `main`; a unit test checks the published copy has everything the page loads and none of the repo-only files. Needs Settings, Pages, Source = GitHub Actions.
 - **Docs**: `docs/publishing.md` became `docs/maintaining.md`, a plain maintainer checklist (the one-off history and email notes were removed); the 0.2.1 entry below still uses the old name.
 - **Rotating players (3 to 6)**: setup takes a list of players (add and "strike out" seats, 3 to 6) instead of two duelists and a fixed judge, and the rounds menu is gone. The game is planned up front: every player duels the same number of times (`duelsPerPlayer`, 3, or 2 when players x 3 is odd or there are too few opponents), so 3 players = 3 rounds, 4 = 6, 5 = 5, 6 = 9. Each round two players duel and another judges; the matchup is shown when the device is handed over. Scores run over the whole game.

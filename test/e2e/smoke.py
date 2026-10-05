@@ -34,11 +34,11 @@ def audit(page, label):
       small: [...document.querySelectorAll('button, input, select')]
         .filter(el => el.offsetParent !== null && el.getBoundingClientRect().height < 43.5)
         .map(el => (el.textContent || el.tagName).trim().slice(0, 20)),
-      broken: document.body.innerText.includes('[object')
+      broken: document.body.innerText.includes('[object') || /(^|\\n)\\s*(null|undefined|NaN)\\s*(\\n|$)/.test(document.body.innerText)
     })""")
     assert r["overflow"] <= 0, f"{label}: horizontal overflow {r['overflow']}px"
     assert not r["small"], f"{label}: tap targets under 44px: {r['small']}"
-    assert not r["broken"], f"{label}: page text contains '[object'"
+    assert not r["broken"], f"{label}: page text contains '[object', null, undefined or NaN"
 
 
 def word(page, c, k):
@@ -69,7 +69,7 @@ def who_is_in(text, players):
 
 
 def read_scoreboard(page):
-    return [(el.locator("span").text_content(), el.locator("strong").text_content()) for el in page.locator(".score").all()]
+    return [(el.locator("span").text_content(), el.locator(".tally").get_attribute("data-points")) for el in page.locator(".score").all()]
 
 
 def main():
@@ -91,6 +91,8 @@ def main():
         assert fonts and all(s == "loaded" for s in fonts), f"bundled fonts failed to load: {fonts}"
         shot(page, "1-setup", full_page=True)
         audit(page, "setup")
+
+        assert page.locator("select").count() == 0, "one word list only, so the setup screen has no word-bank picker"
 
         # Seats: three to start with, nobody can be struck out at three, up to six can be added.
         seats = page.locator(".seat input")
@@ -221,6 +223,8 @@ def main():
         wide.locator("main .btn").last.click()
         wide.locator("main .btn").last.click()
         word(wide, 0, 1).click()
+        tops = wide.evaluate("[...document.querySelectorAll('.col')].map(c => Math.round(c.querySelector('.word').getBoundingClientRect().top))")
+        assert len(set(tops)) == 1, f"the three word lists should start at the same height even when a heading wraps: {tops}"
         shot(wide, "6-wide-pick")
         assert wide.locator(".tab").first.is_hidden(), "column tabs are phone-only"
 

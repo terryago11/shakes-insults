@@ -22,12 +22,12 @@ judges who won. Everyone takes turns.
 
 ## Try it
 
-No install, no internet needed. Download or clone this folder and open `index.html` in a
-browser. To play on a phone, put the folder on any static web host (it is only plain files) and
-open its address on the phone.
+**Play it now: https://terryago11.github.io/shakes-insults/**
 
-It has been tested only in a desktop browser pretending to be a phone, not yet on a real iPhone
-or Android. If something looks wrong on your phone, please say so.
+Or run it yourself, with no install and no internet: download or clone this folder and open
+`index.html` in a browser. It is only plain files, so any static web host works too.
+
+It was built for phones. If something looks wrong on yours, please say so.
 
 The game remembers the names on your device so you don't retype them. It sends nothing
 anywhere and uses no cookies or tracking.
@@ -55,9 +55,11 @@ InsultGame.registerPack({
 });
 ```
 
-Save it as `packs/mine.js` and add `<script src="packs/mine.js"></script>` to `index.html`.
-The two shipped packs are generated from `reference/Insults.xlsx` by `scripts/xlsx-to-pack.py`
-(needs `pip install openpyxl`).
+Save it as `packs/mine.js` and swap its `<script src="packs/mine.js"></script>` line in for the
+`packs/full.js` one in `index.html`. The game uses one word list, the full one. `packs/short.js`
+is a smaller list for tinkering: load it instead, or load two packs to get a picker on the setup
+screen. Both shipped packs are generated from `reference/Insults.xlsx` by
+`scripts/xlsx-to-pack.py` (needs `pip install openpyxl`).
 
 ## For developers
 
