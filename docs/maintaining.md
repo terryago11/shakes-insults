@@ -20,11 +20,15 @@ verified.
   tooling. *On (verified).*
 - **(settings) Code scanning (CodeQL)**: default setup, weekly, scanning JavaScript, Python and
   GitHub Actions files. *On (verified).*
-- **(settings) A ruleset on `main`**: Settings, Rules, Rulesets, New ruleset, New branch ruleset;
-  enforcement Active; target the default branch. At least restrict deletions and block force
-  pushes. Optional extras: require status checks (`unit (20)` and `unit (22)` from CI) and
-  require a pull request before merging; leave the owner on the bypass list so a solo project
-  cannot lock itself out. *Not yet set up (verified: no rulesets, `main` unprotected).*
+- **(settings) A ruleset on `main`**: Settings, Rules, Rulesets (New ruleset, New branch ruleset).
+  *Active ("Default Branch rule", verified): applies to the default branch and blocks deletion
+  and force pushes, requires a pull request (no approvals needed, so a solo owner can merge) and
+  requires the CI checks `unit (20)` and `unit (22)` to pass (not "up to date with main").*
+  The CodeQL checks are not required. The bypass list is empty, so nobody, including the owner,
+  can push to `main` directly or merge with a failing required check; the owner can still edit or
+  disable the ruleset in Settings. Because the required check names include the Node version,
+  changing the matrix in `.github/workflows/test.yml` means updating the ruleset too, or every PR
+  will wait for a check that never runs.
 - **Two-factor authentication** on the owning account. *Turned on by the owner (not verifiable
   from the repository).*
 
