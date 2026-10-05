@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- A printed drop cap: a black-bordered box on the paper colour, a red slab T with its black plate
+       ghosted a little off-register, like the title page. Drawn as paths so it needs no font. -->
+  <rect width="64" height="64" rx="8" fill="#231810"/>
+  <rect x="5" y="5" width="54" height="54" rx="3" fill="#e6d6ac"/>
+  <path transform="translate(2.5 2.5)" fill="#231810" d="M15 14H49V27H44V21H35V46H40V50H24V46H29V21H20V27H15Z"/>
+  <path fill="#a63020" d="M15 14H49V27H44V21H35V46H40V50H24V46H29V21H20V27H15Z"/>
+</svg>

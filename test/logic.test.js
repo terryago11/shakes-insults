@@ -308,7 +308,7 @@ test("site build: the published copy has everything the page loads, and none of 
     ].filter((ref) => !/^(https?:|data:)/.test(ref));
     assert.ok(needed.length > 8, "expected scripts, a stylesheet and fonts to be referenced");
     for (const ref of needed) assert.ok(fs.existsSync(path.join(dest, ref)), `the published site is missing ${ref}`);
-    for (const f of ["index.html", "LICENSE", "fonts/OFL.txt", "social-preview.png"]) assert.ok(fs.existsSync(path.join(dest, f)), `missing ${f}`);
+    for (const f of ["index.html", "LICENSE", "fonts/OFL.txt", "social-preview.png", "favicon.svg", "favicon-32.png", "apple-touch-icon.png"]) assert.ok(fs.existsSync(path.join(dest, f)), `missing ${f}`);
     for (const f of ["reference", "test", "docs", "scripts", "package.json", "CLAUDE.md", ".github", ".git"]) {
       assert.ok(!fs.existsSync(path.join(dest, f)), `${f} must not be published`);
     }
@@ -395,4 +395,20 @@ test("sound cues: every cue is well formed, used by the game, and the countdown 
   const endMs = (name) => Math.max(...cues[name].notes.map((n) => n.at + n.dur)) * 1000;
   assert.ok(endMs("tick") < G.settings.countdownStepMs, `tick lasts ${endMs("tick")}ms, longer than a countdown step`);
   assert.ok(endMs("go") <= 1500, "the go trumpet should not drag on past 1.5s");
+});
+
+test("icons: the page links an SVG favicon, a 32px PNG and an Apple touch icon, and the files are what they claim", () => {
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  for (const href of ["favicon.svg", "favicon-32.png", "apple-touch-icon.png"]) {
+    assert.ok(html.includes(`href="${href}"`), `index.html does not link ${href}`);
+    assert.ok(fs.existsSync(path.join(root, href)), `${href} is missing`);
+  }
+  assert.match(fs.readFileSync(path.join(root, "favicon.svg"), "utf8"), /<svg[^>]+viewBox=/);
+  const size = (file) => {
+    const png = fs.readFileSync(path.join(root, file));
+    assert.strictEqual(png.subarray(1, 4).toString(), "PNG", `${file} is not a PNG`);
+    return [png.readUInt32BE(16), png.readUInt32BE(20)];
+  };
+  assert.deepStrictEqual(size("favicon-32.png"), [32, 32]);
+  assert.deepStrictEqual(size("apple-touch-icon.png"), [180, 180]);
 });

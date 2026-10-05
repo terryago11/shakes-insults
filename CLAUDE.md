@@ -37,6 +37,7 @@ Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dep
 | `fonts/` | Bundled IM Fell woff2 files + `OFL.txt` (SIL OFL) + provenance note |
 | `reference/Insults.xlsx` | The curated word list (sheets `full` and `short`); the packs are generated from it |
 | `scripts/xlsx-to-pack.py` | Regenerates `short.js` and `full.js` from the spreadsheet |
+| `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png`, `scripts/make-icons.py` | The icons (a red slab T in the title page's drop-cap box). Edit `favicon.svg`, then run the script to regenerate the PNGs |
 | `social-preview.png`, `scripts/social-image.py` | The 1200x630 image shown when the site is shared (a screenshot of the title page); regenerate it with the script when the setup screen changes |
 | `test/logic.test.js` | Node tests: logic, pack lint, text-config checks, "no text in html/css" |
 | `test/e2e/smoke.py` | Phone-sized browser run of a full game (see Dev Commands); also asserts the accessibility behaviour below |
