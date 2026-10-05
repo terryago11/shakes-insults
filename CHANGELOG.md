@@ -2,7 +2,7 @@
 
 Newest first.
 
-## Unreleased
+## 0.4.0 — 2026-10-05
 
 - **Favicon**: a red slab "T" with its dark plate ghosted off-register, in the title page's black-bordered box (`favicon.svg`, a 32px PNG, and an Apple touch icon for iPhone home screens); regenerate the PNGs with `scripts/make-icons.py`. It also ends the browser's automatic `/favicon.ico` request failing with a 404.
 - **Wording**: the final screen's "Alter the Setup" button now reads "Changeth the Setup".
