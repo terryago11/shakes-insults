@@ -66,6 +66,7 @@ screen. Both shipped packs are generated from `reference/Insults.xlsx` by
 ```bash
 npm start          # serve the folder at http://localhost:8000
 npm test           # unit tests, word-pack and text checks (Node 20 or newer)
+npm run test:a11y  # optional accessibility audit (pip install playwright axe-playwright-python)
 npm run test:e2e   # optional full game in a phone-sized browser (pip install playwright)
 ```
 
