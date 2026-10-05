@@ -163,8 +163,11 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
 .ask, .versus { margin: 0; font-style: italic; font-size: 1.2rem; }
 .scoreboard { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .score { padding: 6px 8px; border: 2px solid var(--ink); text-align: center; font-family: var(--caps); text-transform: uppercase; letter-spacing: 0.06em; }
-.scoreboard.many .score strong { font-size: 2.6rem; }
-.score strong { display: block; font-family: var(--display); font-weight: 400; font-size: 4.2rem; line-height: 1; color: var(--red); text-shadow: -3px 2px 0 var(--ghost); }
+/* Tally marks: ink strokes, every fifth drawn across the four before it in hand-applied red. */
+.tally { display: block; width: 100%; max-width: 150px; height: 52px; margin: 2px auto 0; overflow: visible; }
+.tally line { stroke: var(--ink); stroke-width: 3.2; stroke-linecap: round; }
+.tally .cross { stroke: var(--red); stroke-width: 3; }
+.tally .blank { stroke: var(--ink-soft); stroke-width: 2; }
 .countdown {
   flex: 1; display: grid; place-items: center; min-height: 55vh; text-align: center;
   font-family: var(--display); font-size: min(38vw, 9rem); line-height: 1; color: var(--red);
@@ -176,8 +179,10 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
 @media (min-width: 720px) {
   body { font-size: 19px; }
   .sheet { padding: 14px 22px 14px; }
-  .picker { grid-template-columns: 1.15fr 0.9fr 1fr; gap: 0; border: 2px solid var(--ink); }
-  .col { border: 0; }
+  .picker { grid-template-columns: 1.15fr 0.9fr 1fr; grid-template-rows: auto 1fr; gap: 0; border: 2px solid var(--ink); }
+  /* Each column spans the heading row and the list row of the picker, so headings share one row
+     height and every list starts at the same place even when one heading wraps. */
+  .col { display: grid; grid-template-rows: subgrid; grid-row: span 2; border: 0; }
   .col + .col { border-left: 1px solid var(--ink); }
   .col + .col + .col { border-left: 3px solid var(--ink); }
   .words { grid-template-columns: 1fr; max-height: 56vh; overflow-y: auto; }

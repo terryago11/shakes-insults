@@ -52,15 +52,22 @@ verified.
 
 The game is static files and needs no server. It is published to GitHub Pages by
 `.github/workflows/pages.yml`, which runs `npm test`, copies only the files the game needs
-(`scripts/build-site.sh`: `index.html`, `style.css`, `LICENSE`, `src/`, `config/`, `packs/`,
-`fonts/`) and deploys that copy, so tests, docs and the reference spreadsheet are not on the site.
+(`scripts/build-site.sh`: `index.html`, `style.css`, `LICENSE`, `fonts/` and every script
+`index.html` loads) and deploys that copy, so tests, docs and the reference spreadsheet are not on the site.
 A unit test fails if the copy is missing anything the page loads or includes a repo-only file.
 
 - **(settings) One-time setup**: Settings, Pages, Build and deployment, Source = **GitHub
-  Actions**. Until that is set, the workflow's deploy step fails. After setting it, re-run the
-  workflow (Actions, pages, Run workflow) or push to `main`.
-- If you add a new top-level file or folder the game needs at runtime, add it to
-  `scripts/build-site.sh` (the test will tell you).
+  Actions**. *Done (verified: build type "workflow"); live at
+  https://terryago11.github.io/shakes-insults/.* If the deploy ever fails, re-run it from
+  Actions, pages, Run workflow.
+- Scripts that `index.html` loads (including the word pack) are published automatically. If you
+  add another kind of runtime file or folder (for example images), add it to
+  `scripts/build-site.sh`; the test will tell you.
+- **Link previews**: `index.html` has Open Graph and Twitter `<meta>` tags and `social-preview.png`
+  (1200x630, a screenshot of the title page; regenerate with `scripts/social-image.py` when the
+  setup screen changes). Their address is absolute (`https://terryago11.github.io/shakes-insults/`),
+  so update it if the site moves. Platforms cache previews: after changing the image, use their
+  share debugger or wait for the cache to expire.
 - Pages serves over HTTPS. See `SECURITY.md` for what the game does and does not do (names
   remembered locally only, no network requests).
 

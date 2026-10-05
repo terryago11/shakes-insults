@@ -242,12 +242,53 @@ test("settings: limits and points are sane, and the text config has words for ev
   assert.ok(G.text.romans.length >= st.maxPlayers, "text.romans must cover duplicate-name numbering");
 });
 
+// Small scanners for our own index.html (trusted, repo-controlled). They walk the string instead of
+// using regex replaces, which static analysis rightly distrusts for "sanitising" markup.
+function htmlWithoutComments(html) {
+  let out = "";
+  let i = 0;
+  while (i < html.length) {
+    if (html.startsWith("<!--", i)) {
+      const end = html.indexOf("-->", i + 4);
+      i = end === -1 ? html.length : end + 3;
+    } else {
+      out += html[i++];
+    }
+  }
+  return out;
+}
+
+// The text of `html` that is outside tags, comments, <script> and <style>.
+function htmlTextOutsideTags(html) {
+  const source = htmlWithoutComments(html);
+  let out = "";
+  let i = 0;
+  while (i < source.length) {
+    if (source[i] !== "<") {
+      out += source[i++];
+      continue;
+    }
+    const close = source.indexOf(">", i);
+    if (close === -1) break;
+    const name = source.slice(i + 1, close).trim().split(/\s/)[0].toLowerCase();
+    i = close + 1;
+    if (name === "script" || name === "style") {
+      const end = source.toLowerCase().indexOf(`</${name}`, i);
+      i = end === -1 ? source.length : end; // the closing tag itself is skipped by the next pass
+    }
+  }
+  return out;
+}
+
+test("the html scanners skip comments, tags, scripts and styles but keep real text", () => {
+  assert.strictEqual(htmlWithoutComments("a<!-- x -->b<!-<!-- y -->- c"), "ab<!-- c", "one pass only: a marker formed by removing a comment is left as text");
+  assert.strictEqual(htmlTextOutsideTags("<p class=a>hi <b>there</b></p><!-- no --><script>var t='nope'</script><style>p{}</style>x"), "hi therex");
+  assert.strictEqual(htmlTextOutsideTags("<head><meta content=\"not text\"><title></title></head>"), "");
+});
+
 test("no player-facing text is hard-coded in index.html or style.css", () => {
   const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
-  const bodyText = html
-    .replace(/<script[\s\S]*?<\/script>|<!--[\s\S]*?-->|<style[\s\S]*?<\/style>/g, "")
-    .replace(/<[^>]+>/g, "")
-    .trim();
+  const bodyText = htmlTextOutsideTags(html).trim();
   assert.strictEqual(bodyText, "", `index.html contains text: "${bodyText}"`);
   assert.doesNotMatch(html, /\s(title|alt|aria-label|placeholder)\s*=/i, "index.html has a text attribute (put it in config/text.js)");
   const css = fs.readFileSync(path.join(root, "style.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
@@ -266,11 +307,40 @@ test("site build: the published copy has everything the page loads, and none of 
     ].filter((ref) => !/^(https?:|data:)/.test(ref));
     assert.ok(needed.length > 8, "expected scripts, a stylesheet and fonts to be referenced");
     for (const ref of needed) assert.ok(fs.existsSync(path.join(dest, ref)), `the published site is missing ${ref}`);
-    for (const f of ["index.html", "LICENSE", "fonts/OFL.txt"]) assert.ok(fs.existsSync(path.join(dest, f)), `missing ${f}`);
+    for (const f of ["index.html", "LICENSE", "fonts/OFL.txt", "social-preview.png"]) assert.ok(fs.existsSync(path.join(dest, f)), `missing ${f}`);
     for (const f of ["reference", "test", "docs", "scripts", "package.json", "CLAUDE.md", ".github", ".git"]) {
       assert.ok(!fs.existsSync(path.join(dest, f)), `${f} must not be published`);
     }
   } finally {
     fs.rmSync(dest, { recursive: true, force: true });
   }
+});
+
+test("the game loads the full word list only (short.js is kept for tinkering, not loaded)", () => {
+  const html = htmlWithoutComments(fs.readFileSync(path.join(root, "index.html"), "utf8"));
+  const packs = [...html.matchAll(/<script src="(packs\/[^"]+)"/g)].map((m) => m[1]);
+  assert.deepStrictEqual(packs, ["packs/full.js"]);
+});
+
+test("link preview: the static <meta> tags match the text config, and the image is the declared size", () => {
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const meta = (attr, key) => {
+    const m = html.match(new RegExp(`<meta ${attr}="${key}" content="([^"]*)"`));
+    assert.ok(m, `index.html has no <meta ${attr}="${key}">`);
+    return m[1];
+  };
+  const text = G.text;
+  assert.strictEqual(meta("property", "og:title"), text.documentTitle);
+  assert.strictEqual(meta("name", "description"), text.documentDescription);
+  assert.strictEqual(meta("property", "og:description"), text.documentDescription);
+  assert.strictEqual(meta("property", "og:image:alt"), text.documentImageAlt);
+  assert.strictEqual(meta("name", "twitter:card"), "summary_large_image");
+  // Previews need absolute addresses, and the image must be one of the published files.
+  const image = meta("property", "og:image");
+  assert.match(image, /^https:\/\/.+\/social-preview\.png$/);
+  assert.strictEqual(meta("property", "og:url") + "social-preview.png", image);
+  const png = fs.readFileSync(path.join(root, "social-preview.png"));
+  assert.strictEqual(png.subarray(1, 4).toString(), "PNG");
+  assert.deepStrictEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [Number(meta("property", "og:image:width")), Number(meta("property", "og:image:height"))]);
+  assert.ok(png.length < 600 * 1024, "keep the preview image small (some platforms reject big ones)");
 });

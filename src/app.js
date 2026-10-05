@@ -23,8 +23,9 @@
     return el;
   }
 
+  // Skips null/false entries (an optional part of a screen), which replaceChildren would print as text.
   function show(...nodes) {
-    app.replaceChildren(...nodes);
+    app.replaceChildren(...nodes.flat(Infinity).filter((n) => n != null && n !== false));
     window.scrollTo(0, 0);
   }
 
@@ -286,12 +287,49 @@
     else screenScores(winnerIdx);
   }
 
+  // Points as tally marks scratched on a wall: strokes in fours, the fifth one drawn across them.
+  // Each stroke leans and runs a little differently (fixed offsets, so a redraw looks the same).
+  // `data-points` and the label carry the number for screen readers and tests.
+  function tally(points, name) {
+    const NS = "http://www.w3.org/2000/svg";
+    const line = (cls, x1, y1, x2, y2) => {
+      const el = document.createElementNS(NS, "line");
+      el.setAttribute("class", cls);
+      for (const [k, v] of Object.entries({ x1, y1, x2, y2 })) el.setAttribute(k, String(v));
+      return el;
+    };
+    const groups = Math.max(1, Math.ceil(points / 5));
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("class", "tally");
+    svg.setAttribute("viewBox", `0 0 ${groups * 60} 46`);
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", t("scores.tallyLabel", { name, points }));
+    svg.dataset.points = String(points);
+    if (points === 0) svg.append(line("blank", 6, 40, 30, 41)); // nothing scratched yet: just the ruled line
+    let k = 0; // stroke counter, drives the offsets
+    for (let g = 0; g < groups; g++) {
+      const marks = Math.min(5, points - g * 5);
+      const strokes = Math.min(4, marks);
+      for (let i = 0; i < strokes; i++, k++) {
+        const x = g * 60 + 8 + i * 11 + ((k * 37) % 3) - 1;
+        const lean = ((k * 53) % 5) - 2;
+        svg.append(line("stroke", x, 5 + ((k * 29) % 4), x + lean, 40 + ((k * 17) % 4)));
+      }
+      if (marks === 5) {
+        const x0 = g * 60 + 3;
+        svg.append(line("stroke cross", x0, 33, x0 + 52, 12 + (g % 2)));
+        k++;
+      }
+    }
+    return svg;
+  }
+
   // One tile per player, in the given seat order.
   function scoreboard(order) {
     return h(
       "div",
-      { class: "scoreboard" + (state.names.length > 4 ? " many" : "") },
-      order.map((p) => h("div", { class: "score" }, h("span", {}, state.names[p]), h("strong", {}, String(state.scores[p]))))
+      { class: "scoreboard" },
+      order.map((p) => h("div", { class: "score" }, h("span", {}, state.names[p]), tally(state.scores[p], state.names[p])))
     );
   }
 
@@ -340,6 +378,13 @@
 
   // Page chrome that has no markup of its own in index.html.
   document.title = t("documentTitle");
+  for (const [selector, value] of [
+    ['meta[name="description"]', t("documentDescription")],
+    ['meta[property="og:image:alt"]', t("documentImageAlt")],
+  ]) {
+    const meta = document.querySelector(selector);
+    if (meta) meta.setAttribute("content", value);
+  }
   document.documentElement.lang = t("lang");
   document.getElementById("strip").textContent = t("ornaments").repeat(80);
   document.getElementById("imprint").textContent = t("footer.imprint");

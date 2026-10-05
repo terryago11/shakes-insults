@@ -24,21 +24,22 @@ Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dep
 
 | Path | Purpose |
 |------|---------|
-| `index.html` | Loads scripts in order: `src/logic.js`, `config/*.js`, `packs/*.js`, then `src/app.js`. Contains no player-facing text |
+| `index.html` | Loads scripts in order: `src/logic.js`, `config/*.js`, `packs/full.js`, then `src/app.js`. Contains no player-facing text |
 | `config/text.js` | **All player-facing text** (titles, buttons, flavour copy, countdown, ordinals, footer). Edited to re-skin or translate |
 | `config/settings.js` | Player limits, duels per player, points for a win and a draw, countdown timing, name length, names storage key |
-| `packs/*.js` | **The word banks.** One file per pack, each calls `InsultGame.registerPack({...})` |
+| `packs/*.js` | **The word banks.** One file per pack, each calls `InsultGame.registerPack({...})`. The game loads only `full.js` (a test enforces it); `short.js` is a smaller list kept for tinkering. The setup screen shows a word-bank picker only if more than one pack is loaded |
 | `src/logic.js` | Pure game logic (`shuffle`, `registerPack`, `resolveColumns`, `buildInsult`, `validatePicks`, `scoreRound` (winner index, or null = draw), `parseSavedNames`, `disambiguate`, `leaders`/`leader`, `duelsEach`, `planRounds`) and text helpers (`makeT`, `nth`). No DOM. Exposed as `window.InsultGame` and `module.exports` |
 | `src/app.js` | UI: screen-by-screen state machine (setup → handoff → pick → ready → countdown → reveal → scores/final) |
 | `style.css` | All styling, mobile-first; no `content:` strings |
 | `fonts/` | Bundled IM Fell woff2 files + `OFL.txt` (SIL OFL) + provenance note |
 | `reference/Insults.xlsx` | The curated word list (sheets `full` and `short`); the packs are generated from it |
 | `scripts/xlsx-to-pack.py` | Regenerates `short.js` and `full.js` from the spreadsheet |
+| `social-preview.png`, `scripts/social-image.py` | The 1200x630 image shown when the site is shared (a screenshot of the title page); regenerate it with the script when the setup screen changes |
 | `test/logic.test.js` | Node tests: logic, pack lint, text-config checks, "no text in html/css" |
 | `test/e2e/smoke.py` | Phone-sized browser run of a full game (see Dev Commands) |
 | `docs/design.md` | Visual design principles and their sources |
-| `scripts/build-site.sh` | Copies only the runtime files into a folder for publishing; the Pages workflow uses it, and a test checks it covers everything `index.html` and `style.css` load |
-| `.github/workflows/pages.yml` | Publishes that copy to GitHub Pages on pushes to `main` (needs Settings, Pages, Source = GitHub Actions) |
+| `scripts/build-site.sh` | Copies only the runtime files into a folder for publishing (every script `index.html` loads, the fonts, `style.css`, `LICENSE`); the Pages workflow uses it, and a test checks it covers everything `index.html` and `style.css` load |
+| `.github/workflows/pages.yml` | Publishes that copy to GitHub Pages on pushes to `main` (live at https://terryago11.github.io/shakes-insults/; Settings, Pages, Source = GitHub Actions) |
 | `.github/workflows/test.yml` | CI: `npm test` on Node 20 and 22 for pushes to `main` and pull requests (the e2e test is not in CI) |
 
 ## Word Pack Format
@@ -55,11 +56,11 @@ InsultGame.registerPack({
 
 - A pool entry is a string or `{ w, tags?, src? }`. Only `w` is used today; `tags`/`src` are reserved for the v2 scoring/citation features.
 - Using the same pool for two columns is intended: each column is shuffled independently.
-- To add a pack: create `packs/<id>.js` and add its `<script>` tag to `index.html`. Nothing else should need to change; if it does, that is a bug in the config design.
+- To add a pack: create `packs/<id>.js` and add its `<script>` tag to `index.html`. Nothing else should need to change (the published site copies whatever `index.html` loads); if it does, that is a bug in the config design.
 
 ## Critical Conventions
 
-- **No hard-coded text.** Every string a player can see lives in `config/text.js` and is read with a literal key, `t("setup.start")`. Words live in `packs/`. `npm test` fails if `app.js` uses a missing key, if a config key is unused (so always use literal keys, never built-up ones), or if `index.html` or `style.css` contain text. Do not add text to code, HTML, or CSS `content:`.
+- **No hard-coded text.** Every string a player can see lives in `config/text.js` and is read with a literal key, `t("setup.start")`. Words live in `packs/`. The one exception is the link-preview `<meta>` tags in `index.html` (crawlers do not run scripts): they repeat `documentTitle`, `documentDescription` and `documentImageAlt`, and `npm test` fails if the copies differ. `npm test` fails if `app.js` uses a missing key, if a config key is unused (so always use literal keys, never built-up ones), or if `index.html` or `style.css` contain text. Do not add text to code, HTML, or CSS `content:`.
 - **Mobile first.** Base CSS is the phone layout; `min-width` media queries add the wide layout. Every tap target is at least 44px tall (the smoke test enforces this), no horizontal scroll, columns stack on a phone and the page scrolls (no nested scroll areas on a phone), key actions sit in the fixed bottom bar within thumb reach. The "dense, cramped" print look comes from type and rules, never from shrinking tap targets.
 - **Early-printing look, not modern graphic design.** Dense type, tight leading, narrow margins, heavy and light rules, unequal columns, red as a hand-applied accent slightly off-register, repeated printers' ornaments, a title-page structure. Do not "clean it up" toward even spacing, centred symmetry or generous whitespace. See `docs/design.md`.
 - **Column colours.** `.c1/.c2/.c3` set `--c` from `--c1/--c2/--c3` (red, blue, green in `style.css`); `hue(i)` in `app.js` applies the class (cycling for more than three columns). Colours must stay readable on the paper (4.5:1); they are not colour-blind-safe by owner's choice.

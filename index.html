@@ -6,6 +6,20 @@
   <meta name="theme-color" content="#e6d6ac">
   <title></title>
   <link rel="stylesheet" href="style.css">
+  <!-- Link-preview (social share) tags. Crawlers do not run scripts, so these are static; the text
+       comes from config/text.js (documentTitle, documentDescription, documentImageAlt) and
+       `npm test` checks the copies match. The image address is absolute because previews need that;
+       change it if the site moves. Regenerate the image with scripts/social-image.py. -->
+  <meta name="description" content="A Shakespearean insult game for three to six players and one phone. Build thine insult by hand, speake it aloud on the count, and let the Judge decide.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="A Most Notable Contention of Insults">
+  <meta property="og:description" content="A Shakespearean insult game for three to six players and one phone. Build thine insult by hand, speake it aloud on the count, and let the Judge decide.">
+  <meta property="og:url" content="https://terryago11.github.io/shakes-insults/">
+  <meta property="og:image" content="https://terryago11.github.io/shakes-insults/social-preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="The title page of the game: a printed broadside headed Contention of Insults.">
+  <meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
   <!-- No player-facing text lives in this file: see config/text.js. The page title, language,
@@ -27,8 +41,8 @@
   <script src="config/text.js"></script>
   <script src="config/settings.js"></script>
 
-  <!-- WORD BANKS: add, remove or swap pack files here. See README.md. -->
-  <script src="packs/short.js"></script>
+  <!-- WORD BANK: the game uses the full list. packs/short.js is a smaller list for tinkering: swap
+       it in here (or add it as a second line to get a picker on the setup screen). See README.md. -->
   <script src="packs/full.js"></script>
 
   <script src="src/app.js"></script>
