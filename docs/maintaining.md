@@ -24,11 +24,10 @@ verified.
   *Active ("Default Branch rule", verified): applies to the default branch and blocks deletion
   and force pushes, requires a pull request (no approvals needed, so a solo owner can merge) and
   requires the CI checks `unit (20)` and `unit (22)` to pass (not "up to date with main").*
-  The CodeQL checks are not required. The owner is on the bypass list with mode "always"
-  (verified), so the owner can push to `main` directly or merge past a failing check; anything
-  running with the owner's credentials (for example `gh` or git on their machine) has that power
-  too. Choosing "for pull requests only" instead keeps force pushes and direct pushes blocked
-  while still allowing a PR to be merged past a failing check. Because the required check names include the Node version,
+  The CodeQL checks are not required. The owner is on the bypass list with mode "for pull requests
+  only" (verified): the owner can merge a PR past a failing check in an emergency, but direct
+  pushes and force pushes to `main` stay blocked for everyone, including anything running with the
+  owner's credentials. Because the required check names include the Node version,
   changing the matrix in `.github/workflows/test.yml` means updating the ruleset too, or every PR
   will wait for a check that never runs.
 - **Two-factor authentication** on the owning account. *Turned on by the owner (not verifiable
