@@ -40,6 +40,12 @@ they cannot give away a secret pick (every word makes the same tap). Nothing sit
 laptop and phone speakers barely reproduce it, and a low kettle drum for the count was effectively
 silent. The recipes are by ear, from general knowledge of how such sounds are built, not from a source.
 
+## Icon
+
+The favicon and home-screen icon are the title page's drop cap shrunk to a box: a red slab T (for
+"Thou") with its black plate ghosted off-register, on the paper colour with a black border. It is
+drawn as paths in `favicon.svg`, so it needs no font.
+
 ## Scores as tally marks
 
 Scores are not numerals but strokes scratched on a wall: four vertical marks with the fifth drawn
