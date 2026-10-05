@@ -8,6 +8,7 @@
   "scripts": {
     "start": "python3 -m http.server 8000",
     "test": "node --test",
-    "test:e2e": "python3 test/e2e/smoke.py"
+    "test:e2e": "python3 test/e2e/smoke.py",
+    "test:a11y": "python3 test/e2e/a11y.py"
   }
 }

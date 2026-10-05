@@ -344,3 +344,8 @@ test("link preview: the static <meta> tags match the text config, and the image 
   assert.deepStrictEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [Number(meta("property", "og:image:width")), Number(meta("property", "og:image:height"))]);
   assert.ok(png.length < 600 * 1024, "keep the preview image small (some platforms reject big ones)");
 });
+
+test("the spoken countdown has a word for every step of the visual one", () => {
+  assert.strictEqual(G.text.countdownSpoken.length, G.text.countdown.length);
+  assert.ok(G.text.countdownSpoken.every((w) => typeof w === "string" && w.trim() !== ""));
+});

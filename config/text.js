@@ -57,7 +57,8 @@ InsultGame.text = {
   pick: {
     title: "{name}, build thy Slaunder",
     lede: "Chuse by thine owne Hand, one Word from each Columne, and not by Chance.",
-    column: "¶ {roman}. The {ordinal} Columne",
+    columnMark: "¶", // ornament before the column heading (hidden from screen readers)
+    column: "{roman}. The {ordinal} Columne",
     tabLabel: "Go to Columne {roman}",
     imprint: "Imprint it!",
     duplicate: "Use a different Word in each Columne.",
@@ -71,6 +72,8 @@ InsultGame.text = {
 
   // Shown one after another; the last one is the "go" word.
   countdown: ["III", "II", "I", "SPEAKE!"],
+  // What a screen reader says for each step of the countdown (the numerals above are only for the eyes).
+  countdownSpoken: ["Three", "Two", "One", "Speake!"],
 
   reveal: {
     title: "Speake it aloud!",

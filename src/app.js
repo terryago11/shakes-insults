@@ -24,9 +24,18 @@
   }
 
   // Skips null/false entries (an optional part of a screen), which replaceChildren would print as text.
+  // After the first screen, focus moves to the new screen's heading: the button that was focused is
+  // gone, and without this keyboard users start again from the top and screen readers hear nothing.
+  let firstScreen = true;
   function show(...nodes) {
     app.replaceChildren(...nodes.flat(Infinity).filter((n) => n != null && n !== false));
     window.scrollTo(0, 0);
+    const heading = app.querySelector("h1");
+    if (heading && !firstScreen) {
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    }
+    firstScreen = false;
   }
 
   // Names are remembered on this device only (localStorage). Storage can be blocked or throw
@@ -107,7 +116,7 @@
             { class: "seat" },
             h("label", {}, t("setup.player", { ordinal: G.nth(t("ordinals"), i + 1) }), input),
             names.length > S.minPlayers
-              ? h("button", { type: "button", class: "btn alt", "aria-label": t("setup.removeLabel", { name: names[i] }), onclick: () => { syncNames(); names.splice(i, 1); renderSeats(); } }, t("setup.remove"))
+              ? h("button", { type: "button", class: "btn alt", "aria-label": t("setup.removeLabel", { name: names[i] }), onclick: () => { syncNames(); names.splice(i, 1); renderSeats(); inputs[Math.min(i, inputs.length - 1)].focus(); } }, t("setup.remove"))
               : null
           )
         )
@@ -152,7 +161,7 @@
   function screenHandoff(i) {
     show(
       roundKicker(),
-      h("h2", {}, t("handoff.title", { name: duelist(i) })),
+      h("h1", { class: "heading" }, t("handoff.title", { name: duelist(i) })),
       h("p", { class: "versus" }, t("handoff.versus", { a: duelist(0), b: duelist(1), judge: judge() })),
       rule(),
       lede(t("handoff.lede")),
@@ -180,6 +189,7 @@
     function choose(c, word) {
       const firstPick = chosen[c] === null;
       chosen[c] = word;
+      setStop(c, columns[c].indexOf(word));
       refresh();
       // Columns are stacked on a phone, where the column tabs are visible (the CSS hides them on
       // wide screens): after a first pick, bring the next empty column up.
@@ -204,14 +214,45 @@
       else screenReady();
     }
 
+    // One tab stop per column (the picked word, else the last one visited) so keyboard users are not
+    // made to tab through every word; arrow keys, Home/End and typing a letter move within the column.
+    function setStop(c, k) {
+      buttons[c].forEach((b, i) => (b.tabIndex = i === k ? 0 : -1));
+    }
+
+    function onWordKey(e, c) {
+      const items = buttons[c];
+      const cur = items.indexOf(document.activeElement);
+      if (cur === -1 || e.ctrlKey || e.metaKey || e.altKey) return;
+      const firstBelow = items.findIndex((b) => b.offsetTop > items[0].offsetTop);
+      const perRow = firstBelow > 0 ? firstBelow : 1; // 2 where the phone layout sets words in two columns
+      let next = -1;
+      if (e.key === "ArrowDown") next = Math.min(items.length - 1, cur + perRow);
+      else if (e.key === "ArrowUp") next = Math.max(0, cur - perRow);
+      else if (e.key === "ArrowRight") next = Math.min(items.length - 1, cur + 1);
+      else if (e.key === "ArrowLeft") next = Math.max(0, cur - 1);
+      else if (e.key === "Home") next = 0;
+      else if (e.key === "End") next = items.length - 1;
+      else if (e.key.length === 1 && e.key.trim() !== "") {
+        const letter = e.key.toLowerCase();
+        for (let step = 1; step <= items.length && next === -1; step++) {
+          const k = (cur + step) % items.length;
+          if (columns[c][k].toLowerCase().startsWith(letter)) next = k;
+        }
+      }
+      if (next === -1) return;
+      e.preventDefault();
+      items[next].focus();
+    }
+
     const colEls = columns.map((words, c) => {
       const list = h(
         "div",
-        { class: "words" },
+        { class: "words", onkeydown: (e) => onWordKey(e, c) },
         words.map((w, k) => {
           const b = h(
             "button",
-            { type: "button", class: "word", "aria-pressed": "false", onclick: () => choose(c, w) },
+            { type: "button", class: "word", "aria-pressed": "false", tabindex: k === 0 ? "0" : "-1", onclick: () => choose(c, w), onfocus: () => setStop(c, k) },
             h("span", { class: "mark", "aria-hidden": "true" }, t("marker")),
             h("span", { class: "txt" }, w)
           );
@@ -220,7 +261,12 @@
         })
       );
       const roman = G.nth(t("romans"), c + 1);
-      const heading = h("h3", {}, t("pick.column", { roman, ordinal: G.nth(t("ordinals"), c + 1) }));
+      const heading = h(
+        "h2",
+        { class: "subheading" },
+        h("span", { "aria-hidden": "true" }, t("pick.columnMark") + " "), // the ornament is not read aloud
+        t("pick.column", { roman, ordinal: G.nth(t("ordinals"), c + 1) })
+      );
       sections[c] = h("section", { class: `col ${hue(c)}` }, heading, list);
       tabs[c] = h(
         "button",
@@ -232,7 +278,7 @@
 
     show(
       roundKicker(),
-      h("h2", {}, t("pick.title", { name: duelist(i) })),
+      h("h1", { class: "heading" }, t("pick.title", { name: duelist(i) })),
       lede(t("pick.lede")),
       h("div", { class: "picker" }, colEls),
       h("div", { class: "bar-space", "aria-hidden": "true" }), // keeps the last row clear of the fixed bar
@@ -244,7 +290,7 @@
   function screenReady() {
     show(
       roundKicker(),
-      h("h2", {}, t("ready.title")),
+      h("h1", { class: "heading" }, t("ready.title")),
       rule(),
       lede(t("ready.lede", { judge: judge() })),
       btn(t("ready.button"), runCountdown, "block")
@@ -253,11 +299,16 @@
 
   async function runCountdown() {
     const labels = t("countdown");
-    const big = h("div", { class: "countdown", "aria-live": "assertive" });
-    show(big);
+    const spoken = t("countdownSpoken");
+    // The big numerals are for the eyes ("III" may be read letter by letter); screen readers get the
+    // spoken words from a live region.
+    const big = h("div", { class: "countdown", "aria-hidden": "true" });
+    const say = h("p", { class: "sr-only", "aria-live": "assertive" });
+    show(h("h1", { class: "sr-only" }, t("ready.button")), big, say);
     for (let n = 0; n < labels.length; n++) {
       const last = n === labels.length - 1;
       big.textContent = labels[n];
+      say.textContent = spoken[n];
       big.classList.toggle("go", last);
       await sleep(last ? S.countdownLastMs : S.countdownStepMs);
     }
@@ -267,10 +318,10 @@
   function screenReveal() {
     const pack = G.packs[state.packId];
     const card = (i) =>
-      h("div", { class: "card" }, h("h3", {}, duelist(i)), h("p", { class: "insult" }, insultNodes(pack.prefix, state.picks[i])));
+      h("div", { class: "card" }, h("h2", { class: "subheading" }, duelist(i)), h("p", { class: "insult" }, insultNodes(pack.prefix, state.picks[i])));
     show(
       roundKicker(),
-      h("h2", {}, t("reveal.title")),
+      h("h1", { class: "heading" }, t("reveal.title")),
       h("div", { class: "cards" }, card(0), card(1)),
       h("p", { class: "ask" }, t("reveal.ask", { judge: judge() })),
       h("div", { class: "btns" }, [
@@ -337,8 +388,8 @@
     show(
       roundKicker(),
       h(
-        "h2",
-        {},
+        "h1",
+        { class: "heading" },
         winnerIdx === null
           ? t("scores.draw", { points: word(S.pointsForDraw) })
           : t("scores.title", { points: word(S.pointsForWin), name: state.names[winnerIdx] })
@@ -357,8 +408,8 @@
     const ranked = seats().sort((x, y) => state.scores[y] - state.scores[x]); // stable: ties keep seat order
     show(
       h(
-        "h2",
-        {},
+        "h1",
+        { class: "heading" },
         top.length === 1
           ? t("final.winner", { name: state.names[top[0]] })
           : t("final.tie", { names: top.map((p) => state.names[p]).join(t("final.nameSeparator")) })

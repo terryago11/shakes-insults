@@ -2,6 +2,16 @@
 
 Newest first.
 
+## Unreleased
+
+- **Accessibility pass** (checked with axe-core, which now reports no violations on any screen, and keyboard tests; not yet with real screen readers):
+  - **Screen changes are announced**: every screen has one level-one heading and focus moves to it when the screen changes (it used to drop to the page, leaving keyboard users at the top and screen readers silent). Column and player headings are level two. Keeping your place also applies after striking out a player.
+  - **Keyboard picking**: each word list is one tab stop; arrow keys, Home/End and typing a letter move within it, Enter or Space picks, Tab moves to the next list.
+  - **Countdown is spoken** as "Three, Two, One, Speake!" (`countdownSpoken` in `config/text.js`); the big numerals are hidden from screen readers.
+  - **Contrast**: picked words fell below 4.5:1 on their tint (red 4.0, green 4.2); their text is now darkened slightly toward ink (red 4.7, blue 5.7, green 4.9), and keeps the tint on hover.
+  - The column ornament is hidden from screen readers.
+  - New optional `npm run test:a11y` runs axe-core over every screen.
+
 ## 0.3.0 — 2026-10-05
 
 The game is live at https://terryago11.github.io/shakes-insults/ (the repository is now public).

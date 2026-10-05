@@ -35,7 +35,7 @@ Each column has its own hand colour: **red** (`--c1`, #a63020), **blue** (`--c2`
 of the insult on the preview and reveal screens. The colours are plain CSS variables at the top of
 `style.css`; a pack with more than three columns cycles through them.
 
-- All three are kept at 4.5:1 contrast or better on the paper colour, for legibility.
+- All three are kept at 4.5:1 contrast or better on the paper colour, for legibility. A picked word sits on a 12% tint of its colour, so its text is darkened 15% toward ink to stay above 4.5:1 there too (the plain colours fall to about 4.0 for red and 4.2 for green on the tint).
 - The palette is **not** designed to be colour-blind-safe (the owner's decision). The same
   information is carried without colour by the order of the words and the numerals I, II, III.
 - The Britannica article supports red and blue as the hand-applied colours (the 42-line Bible's
