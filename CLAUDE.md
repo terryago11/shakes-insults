@@ -7,6 +7,7 @@ A Shakespearean insult game for 3 to 6 players on one shared phone (or any devic
 ```bash
 npm start            # serve the folder at http://localhost:8000 (python3 http.server)
 npm test             # node --test: logic, pack lint, text-config checks (Node 20+, no dependencies; CI runs 20 and 22)
+npm run test:a11y    # optional axe-core audit of every screen: pip install playwright axe-playwright-python
 npm run test:e2e     # optional phone-sized browser run: pip install playwright
                      # (set CHROMIUM=/path/to/chromium if Playwright's own download is unavailable;
                      #  SHOTS=/some/dir also saves screenshots)
@@ -36,7 +37,8 @@ Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dep
 | `scripts/xlsx-to-pack.py` | Regenerates `short.js` and `full.js` from the spreadsheet |
 | `social-preview.png`, `scripts/social-image.py` | The 1200x630 image shown when the site is shared (a screenshot of the title page); regenerate it with the script when the setup screen changes |
 | `test/logic.test.js` | Node tests: logic, pack lint, text-config checks, "no text in html/css" |
-| `test/e2e/smoke.py` | Phone-sized browser run of a full game (see Dev Commands) |
+| `test/e2e/smoke.py` | Phone-sized browser run of a full game (see Dev Commands); also asserts the accessibility behaviour below |
+| `test/e2e/a11y.py` | Optional axe-core audit of every screen (exits 1 on any violation) |
 | `docs/design.md` | Visual design principles and their sources |
 | `scripts/build-site.sh` | Copies only the runtime files into a folder for publishing (every script `index.html` loads, the fonts, `style.css`, `LICENSE`); the Pages workflow uses it, and a test checks it covers everything `index.html` and `style.css` load |
 | `.github/workflows/pages.yml` | Publishes that copy to GitHub Pages on pushes to `main` (live at https://terryago11.github.io/shakes-insults/; Settings, Pages, Source = GitHub Actions) |
@@ -64,6 +66,7 @@ InsultGame.registerPack({
 - **Mobile first.** Base CSS is the phone layout; `min-width` media queries add the wide layout. Every tap target is at least 44px tall (the smoke test enforces this), no horizontal scroll, columns stack on a phone and the page scrolls (no nested scroll areas on a phone), key actions sit in the fixed bottom bar within thumb reach. The "dense, cramped" print look comes from type and rules, never from shrinking tap targets.
 - **Early-printing look, not modern graphic design.** Dense type, tight leading, narrow margins, heavy and light rules, unequal columns, red as a hand-applied accent slightly off-register, repeated printers' ornaments, a title-page structure. Do not "clean it up" toward even spacing, centred symmetry or generous whitespace. See `docs/design.md`.
 - **Column colours.** `.c1/.c2/.c3` set `--c` from `--c1/--c2/--c3` (red, blue, green in `style.css`); `hue(i)` in `app.js` applies the class (cycling for more than three columns). Colours must stay readable on the paper (4.5:1); they are not colour-blind-safe by owner's choice.
+- **Accessibility.** One `h1` per screen (`.heading`), with `h2`s (`.subheading`) beneath; `show()` moves focus to the new screen's heading (not on the very first screen). Word lists have one tab stop each (roving tabindex): arrows, Home/End and typing a letter move within a list. The countdown is spoken from `countdownSpoken` (the big numerals are `aria-hidden`). Tally marks have a label. Picked-word text is darkened toward ink so it keeps 4.5:1 on its tint. Decorative ornaments are `aria-hidden`. `smoke.py` asserts the h1, the focus move, the contrast and the keyboard behaviour; run `npm run test:a11y` after UI changes.
 - **Awkward is allowed.** Do not tidy rough edges that are part of the printed look. Fix real defects only (overlap, unreadable text, tap targets under 44px, broken behaviour).
 - **Classic `<script>` tags, not ES modules.** Modules (and `fetch` of JSON) are blocked on `file://`, which would break double-click-to-run. Do not convert to modules or JSON packs without deciding to drop that.
 - **Fonts are bundled** in `fonts/` (no CDN, no network requests). Keep `OFL.txt` with them.

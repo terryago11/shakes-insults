@@ -28,17 +28,44 @@ def shot(page, name, **kw):
         page.screenshot(path=f"{SHOTS}/{name}.png", **kw)
 
 
-def audit(page, label):
+def audit(page, label, focus=True):
     r = page.evaluate("""() => ({
       overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       small: [...document.querySelectorAll('button, input, select')]
         .filter(el => el.offsetParent !== null && el.getBoundingClientRect().height < 43.5)
         .map(el => (el.textContent || el.tagName).trim().slice(0, 20)),
+      h1s: document.querySelectorAll('main h1').length,
+      onHeading: !!document.activeElement && document.activeElement.tagName === 'H1',
       broken: document.body.innerText.includes('[object') || /(^|\\n)\\s*(null|undefined|NaN)\\s*(\\n|$)/.test(document.body.innerText)
     })""")
     assert r["overflow"] <= 0, f"{label}: horizontal overflow {r['overflow']}px"
     assert not r["small"], f"{label}: tap targets under 44px: {r['small']}"
+    assert r["h1s"] == 1, f"{label}: a screen should have exactly one level-one heading, found {r['h1s']}"
+    if focus:
+        assert r["onHeading"], f"{label}: focus should move to the screen's heading when the screen changes"
     assert not r["broken"], f"{label}: page text contains '[object', null, undefined or NaN"
+
+
+CONTRAST_JS = """() => {
+  const parse = (c) => { const m = c.match(/[\\d.]+/g).map(Number); const k = c.startsWith('color(') ? 255 : 1;
+    return { r: m[0] * k, g: m[1] * k, b: m[2] * k, a: m.length > 3 ? m[3] : 1 }; };
+  const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b); };
+  const over = (fg, bg) => ({ r: fg.r * fg.a + bg.r * (1 - fg.a), g: fg.g * fg.a + bg.g * (1 - fg.a), b: fg.b * fg.a + bg.b * (1 - fg.a) });
+  const paper = parse(getComputedStyle(document.body).backgroundColor);
+  return [...document.querySelectorAll('.word[aria-pressed="true"]')].map((el) => {
+    const text = parse(getComputedStyle(el.querySelector('.txt')).color);
+    const bg = over(parse(getComputedStyle(el).backgroundColor), paper);
+    const a = lum(text), b = lum(bg);
+    return Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 100) / 100;
+  });
+}"""
+
+
+def focused_word(page):
+    """[column index, text] of the focused word button, or [-1, ''] if focus is elsewhere."""
+    return page.evaluate("""() => { const a = document.activeElement, col = a && a.closest('.col');
+      return [col ? [...document.querySelectorAll('.col')].indexOf(col) : -1, col && a.querySelector('.txt') ? a.querySelector('.txt').textContent : ''] }""")
 
 
 def word(page, c, k):
@@ -90,7 +117,7 @@ def main():
         fonts = page.evaluate("document.fonts.ready.then(() => Promise.all([...document.fonts].map(f => f.load().then(() => f.status))))")
         assert fonts and all(s == "loaded" for s in fonts), f"bundled fonts failed to load: {fonts}"
         shot(page, "1-setup", full_page=True)
-        audit(page, "setup")
+        audit(page, "setup", focus=False)
 
         assert page.locator("select").count() == 0, "one word list only, so the setup screen has no word-bank picker"
 
@@ -103,7 +130,7 @@ def main():
             add.tap()
         assert seats.count() == 6 and add.is_disabled(), "six players is the maximum"
         assert len({seats.nth(i).input_value() for i in range(6)}) == 6, "added seats get distinct default names"
-        audit(page, "setup with six players")
+        audit(page, "setup with six players", focus=False)
         shot(page, "1b-setup-six", full_page=True)
         for _ in range(2):
             page.locator(".seat .btn").last.tap()
@@ -114,6 +141,7 @@ def main():
         for i, n in enumerate(names):
             seats.nth(i).fill(n)
         page.locator(".seat .btn").nth(1).tap()  # strike out Ben (a middle seat): the others keep their names
+        assert page.evaluate("document.activeElement.tagName") == "INPUT", "after striking a player out, focus should stay in the list of names"
         assert [seats.nth(i).input_value() for i in range(3)] == ["Ada", "Cy<b>x", "Dee"]
         add.tap()
         seats.nth(3).fill("Ben")
@@ -133,13 +161,19 @@ def main():
             assert rnd <= 12, "the game should have ended after six rounds"
             duelists, insults = [], {}
             for slot, picks in enumerate(((0, 1, 2), (5, 4, 3))):
-                who = who_is_in(page.locator("main h2").text_content(), players)
+                who = who_is_in(page.locator("main h1").text_content(), players)
                 versus = page.locator(".versus").text_content()
                 assert sum(n in versus for n in players) == 3, f"the matchup line should name three players: {versus!r}"
                 duelists.append(who)
                 go(page)  # hand over to this duelist
                 if rnd == 1 and slot == 0:
                     audit(page, "pick")
+                    # Keyboard on the phone layout (words in two columns): one tab stop per column, and
+                    # ArrowDown moves a row (two words).
+                    assert page.locator(".col").nth(0).locator('.word[tabindex="0"]').count() == 1, "one tab stop per word list"
+                    word(page, 0, 0).focus()
+                    page.keyboard.press("ArrowDown")
+                    assert page.evaluate("[...document.querySelectorAll('.col')[0].querySelectorAll('.word')].indexOf(document.activeElement)") == 2, "ArrowDown should move a row down in the two-column layout"
                     shot(page, "2-pick-top")
                     word(page, 0, 2).tap(); page.wait_for_timeout(900)
                     top2 = page.evaluate("document.querySelectorAll('.col')[1].getBoundingClientRect().top")
@@ -162,7 +196,7 @@ def main():
             assert duelists[0] != duelists[1], "a player cannot duel themselves"
             go(page)  # begin the count
             page.wait_for_selector(".insult", timeout=8000)
-            assert page.locator(".card h3").all_text_contents() == duelists, "reveal should show the two duelists"
+            assert page.locator(".card h2").all_text_contents() == duelists, "reveal should show the two duelists"
             assert page.locator(".insult").all_inner_texts() == [insults[d] for d in duelists], "revealed insults differ from locked-in picks"
             others = [n for n in players if n not in duelists]
             ask = page.locator(".ask").text_content()
@@ -197,7 +231,7 @@ def main():
         ranked = sorted(players, key=lambda n: -scores[n])  # stable: ties keep seat order
         assert read_scoreboard(page) == [(n, str(scores[n])) for n in ranked], "final board is ranked, ties in seat order"
         top = [n for n in players if scores[n] == max(scores.values())]
-        heading = page.locator("main h2").text_content()
+        heading = page.locator("main h1").text_content()
         assert all(n in heading for n in top) and not any(n in heading for n in players if n not in top), f"final heading should name exactly {top}: {heading!r}"
         shot(page, "5-final")
         audit(page, "final")
@@ -225,6 +259,34 @@ def main():
         word(wide, 0, 1).click()
         tops = wide.evaluate("[...document.querySelectorAll('.col')].map(c => Math.round(c.querySelector('.word').getBoundingClientRect().top))")
         assert len(set(tops)) == 1, f"the three word lists should start at the same height even when a heading wraps: {tops}"
+        for c in (1, 2):
+            word(wide, c, 1).click()
+        ratios = wide.evaluate(CONTRAST_JS)
+        assert len(ratios) == 3 and min(ratios) >= 4.5, f"picked words must keep 4.5:1 contrast on their tint: {ratios}"
+        word(wide, 0, 1).hover()
+        assert min(wide.evaluate(CONTRAST_JS)) >= 4.5, "a picked word must keep 4.5:1 contrast while hovered"
+
+        # Keyboard: Tab reaches one stop per list, arrows and letters move within it, Enter picks.
+        kb = browser.new_context(viewport={"width": 1100, "height": 900}).new_page()
+        kb.goto(URL)
+        kb.locator("main .btn").last.click(); kb.locator("main .btn").last.click()
+        assert kb.evaluate("document.activeElement.tagName") == "H1", "focus starts on the heading of the pick screen"
+        for c in range(3):
+            assert kb.locator(".col").nth(c).locator('.word[tabindex="0"]').count() == 1
+        kb.keyboard.press("Tab")
+        assert focused_word(kb)[0] == 0, "first Tab should land in the first word list"
+        kb.keyboard.press("ArrowDown")
+        assert kb.evaluate("[...document.querySelectorAll('.col')[0].querySelectorAll('.word')].indexOf(document.activeElement)") == 1
+        kb.keyboard.press("b")
+        col, text = focused_word(kb)
+        assert col == 0 and text.lower().startswith("b"), f"typing a letter should jump to the next word starting with it: {text!r}"
+        kb.keyboard.press("Enter")
+        assert kb.evaluate("document.activeElement.getAttribute('aria-pressed')") == "true", "Enter should pick the focused word"
+        kb.keyboard.press("Tab")
+        assert focused_word(kb)[0] == 1, "Tab from a list should move to the next list, not the next word"
+        kb.keyboard.press("End")
+        assert kb.evaluate("document.activeElement === [...document.querySelectorAll('.col')[1].querySelectorAll('.word')].pop()"), "End should go to the last word"
+        kb.close()
         shot(wide, "6-wide-pick")
         assert wide.locator(".tab").first.is_hidden(), "column tabs are phone-only"
 

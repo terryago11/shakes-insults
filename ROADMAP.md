@@ -14,7 +14,7 @@ Shipped work lives in [CHANGELOG.md](./CHANGELOG.md). Nothing below is committed
 - **"Where's it from?" reveal** — use the optional `src` field on words to show a play/act/scene citation after each round. Needs curated citations; no complete open dataset with line references was found when this was researched.
 - **Scoring options beyond judge-only** — per-word `tags` with a counter table (e.g. beast vs. body), or derived stats (hyphenated-compound bonus, alliteration). Playtest first; these are untested ideas.
 - **Word-pack switcher in the UI** — the game uses the full list only for now; the setup screen already shows a picker automatically when more than one pack is loaded, so this is mostly about having a second list worth offering.
-- **Accessibility pass** — screen-reader announcements for the countdown and reveal, larger tap targets, keyboard shortcuts for picking.
+- **Test with real assistive technology** — the accessibility pass was checked with axe-core and keyboard tests only. Still to try: VoiceOver on iOS and TalkBack on Android (does the countdown read well, is the tally label clear?), 200% text zoom, and Windows high-contrast mode.
 - **Sound / haptics** for the countdown.
 - **Playable on real phones** — so far only tested in an emulated phone viewport; try real devices (notably iOS Safari: sticky headings, `color-mix`, the fixed bar and the on-screen keyboard).
 - **Per-pack column colours** — let a pack choose its own three (or more) hand colours instead of the CSS defaults.

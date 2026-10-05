@@ -68,8 +68,12 @@ footer p { margin: 0 0 4px; }
 .title { margin: 0; font-weight: 400; }
 .t-sm { display: block; font-family: var(--caps); font-size: 1rem; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.1; }
 .t-lg { display: block; font-family: var(--caps); font-size: clamp(2.3rem, 12vw, 4.2rem); text-transform: uppercase; line-height: 0.9; letter-spacing: -0.01em; }
-h2 { margin: 0; font-family: var(--caps); font-weight: 400; font-size: clamp(1.7rem, 8vw, 2.6rem); line-height: 0.95; text-transform: uppercase; }
-h3 { margin: 0; font-family: var(--caps); font-weight: 400; font-size: 1rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.heading { margin: 0; font-family: var(--caps); font-weight: 400; font-size: clamp(1.7rem, 8vw, 2.6rem); line-height: 0.95; text-transform: uppercase; }
+.subheading { margin: 0; font-family: var(--caps); font-weight: 400; font-size: 1rem; letter-spacing: 0.1em; text-transform: uppercase; }
+/* Headings take focus when a screen changes (so screen readers announce it); they are not controls, so no ring. */
+[tabindex="-1"]:focus { outline: none; }
+/* Text for screen readers only. */
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* Paragraph with a hand-coloured drop cap: red letter, printed black box, black plate ghosted
    off-register. ::first-letter keeps the text whole for screen readers. */
@@ -121,7 +125,7 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
 /* The word picker: columns stacked on a phone, the page scrolls (no nested scrolling). */
 .picker { display: grid; gap: 12px; grid-template-columns: 1fr; }
 .col { border: 2px solid var(--ink); }
-.col h3 {
+.col .subheading {
   position: sticky; top: 0; z-index: 1;
   padding: 5px 8px 3px; background: var(--paper); border-bottom: 4px double var(--ink);
   color: var(--c); text-shadow: 0 0 0.6px var(--c);
@@ -136,7 +140,10 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
 .word .mark { flex: none; width: 0; overflow: visible; visibility: hidden; font-size: 1rem; }
 .word .txt { display: inline-block; }
 /* Coloured words: picked words in a list, and the words of an insult. */
-.w, .word[aria-pressed="true"] { color: var(--c); text-shadow: 0.6px 0 0 var(--c); }
+.w { color: var(--c); text-shadow: 0.6px 0 0 var(--c); }
+/* A picked word sits on a tint of its column colour; its text is darkened a little toward ink so it
+   keeps 4.5:1 against that tint (red and green fall to 4.0 and 4.2 otherwise). */
+.word[aria-pressed="true"] { color: color-mix(in srgb, var(--c) 85%, var(--ink)); text-shadow: 0.6px 0 0 currentColor; }
 .word[aria-pressed="true"] { background: color-mix(in srgb, var(--c) 12%, transparent); }
 .word[aria-pressed="true"] .mark { visibility: visible; width: 1.1rem; }
 .word[aria-pressed="true"] .txt { border-bottom: 2px solid var(--c); transform: rotate(-0.8deg); }
@@ -188,7 +195,7 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
   .words { grid-template-columns: 1fr; max-height: 56vh; overflow-y: auto; }
   .word { min-height: 36px; }
   .word:nth-child(odd) { border-right: 0; }
-  .col h3 { position: static; }
+  .col .subheading { position: static; }
   .tab { display: none; }
   .controls { grid-template-columns: 1fr; }
   .controls .btn { justify-self: end; font-size: 1.2rem; padding: 8px 20px; }
@@ -199,5 +206,6 @@ button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-c
 
 @media (hover: hover) {
   .word:hover { background: rgba(35, 24, 16, 0.07); }
+  .word[aria-pressed="true"]:hover { background: color-mix(in srgb, var(--c) 12%, transparent); }
   .btn:hover:not(:disabled) { box-shadow: 3px 2px 0 var(--red); }
 }
