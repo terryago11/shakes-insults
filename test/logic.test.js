@@ -368,23 +368,31 @@ test("sound cues: every cue is well formed, used by the game, and the countdown 
     assert.ok(Array.isArray(cue.notes) && cue.notes.length > 0, `${name}: needs notes`);
     for (const n of cue.notes) {
       assert.ok(n.freq >= 40 && n.freq <= 8000, `${name}: freq ${n.freq}`);
-      assert.ok(n.at >= 0 && n.dur > 0 && n.at + n.dur <= 1.5, `${name}: timing ${n.at}+${n.dur}`);
+      assert.ok(n.at >= 0 && n.dur > 0 && n.at + n.dur <= 2, `${name}: timing ${n.at}+${n.dur}`);
       if (n.to !== undefined) assert.ok(n.to >= 40 && n.to <= 8000, `${name}: glide target ${n.to}`);
       if (n.gain !== undefined) assert.ok(n.gain > 0 && n.gain <= 1, `${name}: gain ${n.gain}`);
       if (n.attack !== undefined) assert.ok(n.attack > 0 && n.attack < n.dur, `${name}: attack ${n.attack}`);
       if (n.detune !== undefined) assert.ok(Math.abs(n.detune) <= 100, `${name}: detune ${n.detune}`);
+      if (n.release !== undefined) assert.ok(n.release > 0 && n.release <= n.dur, `${name}: release ${n.release}`);
       if (n.filter) assert.ok(n.filter.freq >= 100 && n.filter.freq <= 12000 && (n.filter.to === undefined || (n.filter.to >= 100 && n.filter.to <= 12000)), `${name}: filter ${JSON.stringify(n.filter)}`);
       if (!n.noise) assert.ok(waves.includes(n.wave || "sine"), `${name}: wave ${n.wave}`);
     }
+    // Phone and laptop speakers barely reproduce bass, so every cue needs something above 300 Hz.
+    assert.ok(cue.notes.some((n) => n.noise || Math.max(n.freq, n.to || 0) >= 300 && (n.freq >= 300 || n.to >= 300)), `${name}: bass only, would be inaudible on small speakers`);
     assert.ok(Array.isArray(cue.vibrate) && cue.vibrate.length > 0 && cue.vibrate.every((ms) => Number.isInteger(ms) && ms > 0 && ms <= 500), `${name}: vibration pattern`);
   }
   // The cues app.js plays are exactly the ones defined (every string literal on a `.cue(` line).
   const app = fs.readFileSync(path.join(root, "src", "app.js"), "utf8");
-  const used = new Set(app.split("\n").filter((line) => line.includes("audio.cue(")).flatMap((line) => [...line.matchAll(/"(\w+)"/g)].map((m) => m[1])));
+  const used = new Set([
+    ...app.split("\n").filter((line) => line.includes("audio.cue(")).flatMap((line) => [...line.matchAll(/"(\w+)"/g)].map((m) => m[1])),
+    ...[...app.matchAll(/"data-cue":\s*"(\w+)"/g)].map((m) => m[1]),
+    ...[...app.matchAll(/dataset\.cue\s*=\s*"(\w+)"/g)].map((m) => m[1]),
+    ...[...app.matchAll(/dataset\.cue\s*\|\|\s*"(\w+)"/g)].map((m) => m[1]), // the default tap
+  ]);
+  used.delete("none"); // a button can opt out of the default tap
   assert.deepStrictEqual([...used].sort(), Object.keys(cues).sort());
-  // A countdown step lasts countdownStepMs: the tick and go cues must finish well inside it.
-  for (const name of ["tick", "go"]) {
-    const end = Math.max(...cues[name].notes.map((n) => n.at + n.dur)) * 1000;
-    assert.ok(end < G.settings.countdownStepMs, `${name} lasts ${end}ms, longer than a countdown step`);
-  }
+  // The tick must be over before the next count; the go trumpet may ring on into the reveal.
+  const endMs = (name) => Math.max(...cues[name].notes.map((n) => n.at + n.dur)) * 1000;
+  assert.ok(endMs("tick") < G.settings.countdownStepMs, `tick lasts ${endMs("tick")}ms, longer than a countdown step`);
+  assert.ok(endMs("go") <= 1500, "the go trumpet should not drag on past 1.5s");
 });

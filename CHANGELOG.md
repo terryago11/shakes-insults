@@ -4,7 +4,8 @@ Newest first.
 
 ## Unreleased
 
-- **Sound and vibration**: stage sounds synthesized in the browser (no audio files): a kettle-drum beat for each count, a trumpet flourish and side drum on "SPEAKE!", a tabor tap when an insult is locked in, a quill scratch for a point, two drum beats for a draw, trumpets and a drum roll for the final. Phones that support it also vibrate (Android only; iPhones cannot). Two switches on the setup screen turn each off, play a sample when switched on, and are remembered on the device; the vibration switch is hidden where vibration is unavailable. Cues are in `config/sound.js`, the engine in `src/sound.js`, and nothing audible reveals a pick.
+- **Wording**: the final screen's "Alter the Setup" button now reads "Changeth the Setup".
+- **Sound and vibration**: stage sounds synthesized in the browser (no audio files). A light tap for every button (a softer tap for choosing a word, the same for every word so it cannot give away a pick), a hand-drum beat for each count, a long trumpet flourish on "SPEAKE!", a tabor tap when an insult is locked in, a rising trumpet when a duel is won (two level trumpet notes for a draw), and a trumpet fanfare over a drum roll for the final. Phones that support it also vibrate (Android only; iPhones cannot). Two switches on the setup screen turn each off, are remembered on the device, and the vibration switch is hidden where vibration is unavailable. Cues are in `config/sound.js`, the engine in `src/sound.js`. Every cue has something above 300 Hz (checked in `npm test`), because the first countdown beat was a low drum that laptop and phone speakers barely reproduce.
 - **Docs audit**: roadmap cleaned up (shipped and moot items removed, real-device note updated), `CLAUDE.md` API list and contrast rule corrected, README and `SECURITY.md` list the accessibility audit tooling, design notes describe the tally marks, and `docs/maintaining.md` gains a release checklist.
 
 ## 0.3.1 — 2026-10-05

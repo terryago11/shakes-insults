@@ -78,12 +78,19 @@ def go(page):
     page.locator("main .btn").last.tap()
 
 
-def pick(page, picks):
-    """Tap one word in each column; return the chosen words."""
-    words = []
-    for c, k in enumerate(picks):
-        words.append(word(page, c, k).locator(".txt").inner_text())
-        word(page, c, k).tap()
+def pick(page, picks, click=False):
+    """Choose one word in each column (tap, or click on desktop); return the chosen words."""
+    def choose(c, k):
+        target = word(page, c, k)
+        text = target.locator(".txt").inner_text()
+        target.click() if click else target.tap()
+        return text
+
+    words = [choose(c, k) for c, k in enumerate(picks)]
+    # Columns I and II draw on the same pool of words and are shuffled at random, so now and then the same
+    # word turns up in both and the game (rightly) will not lock it in. Choose another word in column II.
+    if page.locator(".bar .btn").is_disabled():
+        words[1] = choose(1, picks[1] + 7)
     return words
 
 
@@ -128,8 +135,7 @@ def play_to_reveal(page):
     page.locator("main .btn").last.click()  # begin
     for picks in ((0, 1, 2), (5, 4, 3)):
         page.locator("main .btn").last.click()  # hand over
-        for c, k in enumerate(picks):
-            word(page, c, k).click()
+        pick(page, picks, click=True)
         page.locator(".bar .btn").click()  # lock in
     page.locator("main .btn").last.click()  # begin the count
     page.wait_for_selector(".insult", timeout=8000)
@@ -334,13 +340,27 @@ def main():
         switches = page_snd.locator("[role=switch]")
         assert switches.count() == 2 and all(switches.nth(i).get_attribute("aria-checked") == "true" for i in range(2)), "sound and vibration start on"
         audit(page_snd, "setup with switches", focus=False)
-        play_to_reveal(page_snd)
+        before = cues(page_snd)["started"]
+        page_snd.locator("main .btn").last.click()  # every button press makes a sound (and a light buzz)
         got = cues(page_snd)
-        assert got["contexts"] == 1 and got["started"] == 15, f"2 lock-ins (2 sounds) + 3 ticks (1) + the go (3 trumpet notes x 2 voices + 2 for the snare) = 15 sounds: {got}"
-        assert got["vibrations"] == [[25], [25], [35], [35], [35], [160]], f"vibration cues out of order: {got['vibrations']}"
-        page_snd.locator(".btns .btn").nth(0).click()  # a winner: a point is scratched
+        assert got["contexts"] == 1 and got["started"] > before and got["vibrations"][-1] == [10], f"a button press should tap and buzz lightly: {got}"
+        for picks in ((0, 1, 2), (5, 4, 3)):
+            page_snd.locator("main .btn").last.click()  # hand over
+            before = cues(page_snd)["started"]
+            word(page_snd, 0, picks[0]).click()
+            got = cues(page_snd)
+            assert got["started"] > before and got["vibrations"][-1] == [8], f"picking a word makes the soft tap (the same for every word): {got}"
+            pick(page_snd, picks, click=True)  # (re-picks everything, avoiding a duplicate word)
+            page_snd.locator(".bar .btn").click()  # lock in: the tabor, not the plain tap
+            assert cues(page_snd)["vibrations"][-1] == [25], "locking in has its own cue"
+        page_snd.locator("main .btn").last.click()  # begin the count
+        page_snd.wait_for_selector(".insult", timeout=8000)
+        buzzes = [v for v in cues(page_snd)["vibrations"] if v not in ([10], [8])]  # leave out the button taps
+        assert buzzes == [[25], [25], [35], [35], [35], [160]], f"lock-ins, three drum beats, then the trumpet: {buzzes}"
+        before = cues(page_snd)["started"]
+        page_snd.locator(".btns .btn").nth(0).click()  # a winner: the trumpet flourish for a win
         got = cues(page_snd)
-        assert got["started"] == 19 and got["vibrations"][-1] == [30, 40, 30], f"a point should scrape twice (two layers each) and buzz: {got}"
+        assert got["started"] >= before + 6 and got["vibrations"][-1] == [30, 40, 30], f"a win should sound a trumpet flourish and buzz: {got}"
         snd.close()
 
         mute = browser.new_context(viewport={"width": 1100, "height": 900})

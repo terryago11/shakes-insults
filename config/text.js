@@ -100,6 +100,6 @@ InsultGame.text = {
     tie: "A Tie between {names}. Their Tongues are equally vile.",
     nameSeparator: ", ",
     again: "Play againe",
-    change: "Alter the Setup",
+    change: "Changeth the Setup",
   },
 };

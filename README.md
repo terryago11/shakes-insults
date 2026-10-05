@@ -32,10 +32,11 @@ It was built for phones. If something looks wrong on yours, please say so.
 The game remembers the names, and your sound and vibration choices, on your device so you don't
 set them again. It sends nothing anywhere and uses no cookies or tracking.
 
-There are sounds in the manner of the old stage: a drumbeat for each count, a trumpet flourish on
-"SPEAKE!", a tap of the side drum when an insult is locked in, a quill scratch for each point, and
-a fanfare at the end. Both sound and vibration can be switched off on the first screen. Vibration
-only works on Android phones; iPhones do not let web pages vibrate, so that switch is not shown there.
+There are sounds in the manner of the old stage: a light tap for every button, a hand-drum beat for
+each count, a long trumpet flourish on "SPEAKE!", a tap of the side drum when an insult is locked in,
+a rising trumpet when a duel is won (two level notes for a draw), and a fanfare with a drum roll at
+the end. Both sound and vibration can be switched off on the first screen. Vibration only works on
+Android phones; iPhones do not let web pages vibrate, so that switch is not shown there.
 
 ## Change it
 

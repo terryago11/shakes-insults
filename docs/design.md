@@ -30,13 +30,15 @@ how early printed sheets were actually put together.
 
 ## Sound
 
-The sounds belong to the stage the insults come from: a kettle-drum beat for each count, a trumpet
-flourish on the go word, a tap of the side drum when an insult is locked in, a quill scratch for a
-point, two level drum beats for a draw, and trumpets over a drum roll to end. They are synthesized
-in the browser (a sawtooth through an opening low-pass filter reads as brass; noise bands make the
-side drum and the quill), so there are no audio files to ship or license. Cues mark moments and
-never choices, so they cannot give away a secret pick. The recipes are by ear, from general
-knowledge of how such sounds are built, not from a source.
+The sounds belong to the stage the insults come from. Every button makes a light tap; the count is a
+hand-drum beat for each number and the go word is a long trumpet flourish; locking in is a tap on the
+side drum; every duel ends with a trumpet (a rising flourish for a win, two level notes for a draw);
+and the end of the game is trumpets over a drum roll. Everything is synthesized in the browser (a
+sawtooth through an opening low-pass filter, held and released, reads as brass; noise bands make the
+side drum), so there are no audio files to ship or license. Cues mark moments and never choices, so
+they cannot give away a secret pick (every word makes the same tap). Nothing sits only in the bass:
+laptop and phone speakers barely reproduce it, and a low kettle drum for the count was effectively
+silent. The recipes are by ear, from general knowledge of how such sounds are built, not from a source.
 
 ## Scores as tally marks
 

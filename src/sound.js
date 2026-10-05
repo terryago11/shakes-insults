@@ -40,7 +40,10 @@
     const gain = ctx.createGain();
     gain.connect(ctx.destination);
     gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.linearRampToValueAtTime((n.gain === undefined ? 1 : n.gain) * cfg.volume, start + (n.attack === undefined ? 0.008 : n.attack));
+    const peak = (n.gain === undefined ? 1 : n.gain) * cfg.volume;
+    const attackEnd = start + (n.attack === undefined ? 0.008 : n.attack);
+    gain.gain.linearRampToValueAtTime(peak, attackEnd);
+    if (n.release) gain.gain.setValueAtTime(peak, Math.max(attackEnd, end - n.release)); // hold, then fade over the last `release` seconds
     gain.gain.exponentialRampToValueAtTime(0.0001, end);
     let source;
     if (n.noise) {
@@ -79,13 +82,17 @@
   function cue(name) {
     const c = cfg.cues[name];
     if (!c) throw new Error(`Unknown sound cue: ${name}`);
-    if (on.sound && ctx && ctx.state === "running") {
-      try {
-        const t0 = ctx.currentTime + 0.02;
-        c.notes.forEach((n) => playNote(n, t0));
-      } catch (e) {
-        /* audio is a nicety; ignore failures */
-      }
+    if (on.sound && ctx) {
+      const play = () => {
+        try {
+          const t0 = ctx.currentTime + 0.02;
+          c.notes.forEach((n) => playNote(n, t0));
+        } catch (e) {
+          /* audio is a nicety; ignore failures */
+        }
+      };
+      if (ctx.state === "running") play();
+      else ctx.resume().then(() => ctx.state === "running" && play(), () => {}); // e.g. Safari starts suspended
     }
     if (on.vibration && canVibrate()) {
       try {
