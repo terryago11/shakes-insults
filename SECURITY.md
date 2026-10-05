@@ -57,4 +57,4 @@ The code is licensed under the [MIT License](./LICENSE). The bundled fonts are u
 
 ## Maintainers
 
-Repository settings that back this policy (private vulnerability reporting, secret scanning, branch protection) and a pre-publication checklist are in [docs/publishing.md](./docs/publishing.md).
+Repository settings that back this policy (private vulnerability reporting, secret scanning, branch protection) are listed in [docs/maintaining.md](./docs/maintaining.md).
