@@ -4,19 +4,16 @@ Shipped work lives in [CHANGELOG.md](./CHANGELOG.md). Nothing below is committed
 
 ## Small
 
-- **Remember the word pack too** — names are already remembered; the same storage code could cover it.
-- **Publish the repo** — turn on the settings in `docs/maintaining.md` first.
 - **Browser test in CI** — add `npm run test:e2e` to the workflow (needs a browser install step).
 
 ## Medium
 
-
 - **"Where's it from?" reveal** — use the optional `src` field on words to show a play/act/scene citation after each round. Needs curated citations; no complete open dataset with line references was found when this was researched.
-- **Scoring options beyond judge-only** — per-word `tags` with a counter table (e.g. beast vs. body), or derived stats (hyphenated-compound bonus, alliteration). Playtest first; these are untested ideas.
+- **Scoring options beyond the judge's verdict** — per-word `tags` with a counter table (e.g. beast vs. body), or derived stats (hyphenated-compound bonus, alliteration). Playtest first; these are untested ideas.
 - **Word-pack switcher in the UI** — the game uses the full list only for now; the setup screen already shows a picker automatically when more than one pack is loaded, so this is mostly about having a second list worth offering.
 - **Test with real assistive technology** — the accessibility pass was checked with axe-core and keyboard tests only. Still to try: VoiceOver on iOS and TalkBack on Android (does the countdown read well, is the tally label clear?), 200% text zoom, and Windows high-contrast mode.
 - **Sound / haptics** for the countdown.
-- **Playable on real phones** — so far only tested in an emulated phone viewport; try real devices (notably iOS Safari: sticky headings, `color-mix`, the fixed bar and the on-screen keyboard).
+- **More real devices** — the owner has played it on their own phone and it looks right (model and browser not recorded). Other phones and browsers are untested, notably the other of iOS Safari / Android Chrome (sticky headings, `color-mix`, the fixed bar, the on-screen keyboard).
 - **Per-pack column colours** — let a pack choose its own three (or more) hand colours instead of the CSS defaults.
 
 ## Large / probably not

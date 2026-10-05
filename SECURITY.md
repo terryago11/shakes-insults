@@ -42,7 +42,7 @@ Insult Duel is a **static, client-side-only** web page: HTML, CSS and vanilla Ja
 
 ### Dependencies
 
-The shipped game has **no runtime dependencies**. Development tooling is limited to Node's built-in test runner and, optionally, Python with Playwright for the browser smoke test. The bundled fonts come from the `@fontsource` packages (see `fonts/README.md`).
+The shipped game has **no runtime dependencies**. Development tooling is limited to Node's built-in test runner and, optionally, Python with Playwright for the browser test and axe-playwright-python for the accessibility audit (the repository installs nothing itself). CI uses GitHub's own actions (checkout, setup-node, configure-pages, upload-pages-artifact, deploy-pages), pinned to major versions. The bundled fonts come from the `@fontsource` packages (see `fonts/README.md`).
 
 ### Known limitations
 

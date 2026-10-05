@@ -28,6 +28,14 @@ how early printed sheets were actually put together.
    the Britannica article, which does not discuss orthography. Pack names and the credit lines
    are left in plain modern English on purpose (attribution should be unambiguous).
 
+## Scores as tally marks
+
+Scores are not numerals but strokes scratched on a wall: four vertical marks with the fifth drawn
+across them, in ink with the crossing stroke in red like the other hand-applied accents. Each
+stroke leans and runs a little differently (fixed offsets, so a redraw looks the same). It fits
+the printed look better than a big modern number, and costs nothing in legibility because a
+player's score never passes six. The number is still given to screen readers.
+
 ## Column colours
 
 Each column has its own hand colour: **red** (`--c1`, #a63020), **blue** (`--c2`, #26469a) and

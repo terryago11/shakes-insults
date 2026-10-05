@@ -71,6 +71,18 @@ A unit test fails if the copy is missing anything the page loads or includes a r
 - Pages serves over HTTPS. See `SECURITY.md` for what the game does and does not do (names
   remembered locally only, no network requests).
 
+## Releasing
+
+1. Branch, set `version` in `package.json`, and rename the changelog's "Unreleased" heading to
+   `## X.Y.Z — date`. Check `git diff`: both edits must be there (a scripted edit once built the
+   changelog text and never saved it).
+2. Open a pull request and merge it once CI is green; the ruleset requires the unit checks.
+3. On `main`, build the release notes from that changelog section, read them, then
+   `gh release create vX.Y.Z --target <sha of main> --title "..." --notes-file notes.md --latest`.
+   Check that the tag points at the `main` commit and that `package.json` at the tag has the new
+   version.
+4. The merge also redeploys the site (see Hosting); check the live page.
+
 ## CI
 
 `.github/workflows/test.yml` runs `npm test` on Node 20 and 22 for pushes to `main` and pull

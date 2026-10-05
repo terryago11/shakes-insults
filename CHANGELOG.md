@@ -2,6 +2,10 @@
 
 Newest first.
 
+## Unreleased
+
+- **Docs audit**: roadmap cleaned up (shipped and moot items removed, real-device note updated), `CLAUDE.md` API list and contrast rule corrected, README and `SECURITY.md` list the accessibility audit tooling, design notes describe the tally marks, and `docs/maintaining.md` gains a release checklist.
+
 ## 0.3.1 — 2026-10-05
 
 - **Accessibility pass** (checked with axe-core, which now reports no violations on any screen, and keyboard tests; not yet with real screen readers):

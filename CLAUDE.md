@@ -6,7 +6,7 @@ A Shakespearean insult game for 3 to 6 players on one shared phone (or any devic
 
 ```bash
 npm start            # serve the folder at http://localhost:8000 (python3 http.server)
-npm test             # node --test: logic, pack lint, text-config checks (Node 20+, no dependencies; CI runs 20 and 22)
+npm test             # node --test: logic, round planner, pack lint, text-config, site-build and link-preview checks (Node 20+, no dependencies; CI runs 20 and 22)
 npm run test:a11y    # optional axe-core audit of every screen: pip install playwright axe-playwright-python
 npm run test:e2e     # optional phone-sized browser run: pip install playwright
                      # (set CHROMIUM=/path/to/chromium if Playwright's own download is unavailable;
@@ -29,7 +29,7 @@ Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dep
 | `config/text.js` | **All player-facing text** (titles, buttons, flavour copy, countdown, ordinals, footer). Edited to re-skin or translate |
 | `config/settings.js` | Player limits, duels per player, points for a win and a draw, countdown timing, name length, names storage key |
 | `packs/*.js` | **The word banks.** One file per pack, each calls `InsultGame.registerPack({...})`. The game loads only `full.js` (a test enforces it); `short.js` is a smaller list kept for tinkering. The setup screen shows a word-bank picker only if more than one pack is loaded |
-| `src/logic.js` | Pure game logic (`shuffle`, `registerPack`, `resolveColumns`, `buildInsult`, `validatePicks`, `scoreRound` (winner index, or null = draw), `parseSavedNames`, `disambiguate`, `leaders`/`leader`, `duelsEach`, `planRounds`) and text helpers (`makeT`, `nth`). No DOM. Exposed as `window.InsultGame` and `module.exports` |
+| `src/logic.js` | Pure game logic (`shuffle`, `wordText`, `registerPack`, the `packs` registry, `resolveColumns`, `buildInsult`, `validatePicks`, `scoreRound` (winner index, or null = draw), `parseSavedNames`, `disambiguate`, `leaders`/`leader`, `duelsEach`, `planRounds`) and text helpers (`makeT`, `nth`). No DOM. Exposed as `window.InsultGame` and `module.exports` |
 | `src/app.js` | UI: screen-by-screen state machine (setup → handoff → pick → ready → countdown → reveal → scores/final) |
 | `style.css` | All styling, mobile-first; no `content:` strings |
 | `fonts/` | Bundled IM Fell woff2 files + `OFL.txt` (SIL OFL) + provenance note |
@@ -40,6 +40,7 @@ Plain HTML, CSS and vanilla JavaScript. No framework, no bundler, no runtime dep
 | `test/e2e/smoke.py` | Phone-sized browser run of a full game (see Dev Commands); also asserts the accessibility behaviour below |
 | `test/e2e/a11y.py` | Optional axe-core audit of every screen (exits 1 on any violation) |
 | `docs/design.md` | Visual design principles and their sources |
+| `docs/maintaining.md` | Maintainer checklist: GitHub settings and what was verified, hosting, link previews, CI, how to cut a release |
 | `scripts/build-site.sh` | Copies only the runtime files into a folder for publishing (every script `index.html` loads, the fonts, `style.css`, `LICENSE`); the Pages workflow uses it, and a test checks it covers everything `index.html` and `style.css` load |
 | `.github/workflows/pages.yml` | Publishes that copy to GitHub Pages on pushes to `main` (live at https://terryago11.github.io/shakes-insults/; Settings, Pages, Source = GitHub Actions) |
 | `.github/workflows/test.yml` | CI: `npm test` on Node 20 and 22 for pushes to `main` and pull requests (the e2e test is not in CI) |
@@ -65,7 +66,7 @@ InsultGame.registerPack({
 - **No hard-coded text.** Every string a player can see lives in `config/text.js` and is read with a literal key, `t("setup.start")`. Words live in `packs/`. The one exception is the link-preview `<meta>` tags in `index.html` (crawlers do not run scripts): they repeat `documentTitle`, `documentDescription` and `documentImageAlt`, and `npm test` fails if the copies differ. `npm test` fails if `app.js` uses a missing key, if a config key is unused (so always use literal keys, never built-up ones), or if `index.html` or `style.css` contain text. Do not add text to code, HTML, or CSS `content:`.
 - **Mobile first.** Base CSS is the phone layout; `min-width` media queries add the wide layout. Every tap target is at least 44px tall (the smoke test enforces this), no horizontal scroll, columns stack on a phone and the page scrolls (no nested scroll areas on a phone), key actions sit in the fixed bottom bar within thumb reach. The "dense, cramped" print look comes from type and rules, never from shrinking tap targets.
 - **Early-printing look, not modern graphic design.** Dense type, tight leading, narrow margins, heavy and light rules, unequal columns, red as a hand-applied accent slightly off-register, repeated printers' ornaments, a title-page structure. Do not "clean it up" toward even spacing, centred symmetry or generous whitespace. See `docs/design.md`.
-- **Column colours.** `.c1/.c2/.c3` set `--c` from `--c1/--c2/--c3` (red, blue, green in `style.css`); `hue(i)` in `app.js` applies the class (cycling for more than three columns). Colours must stay readable on the paper (4.5:1); they are not colour-blind-safe by owner's choice.
+- **Column colours.** `.c1/.c2/.c3` set `--c` from `--c1/--c2/--c3` (red, blue, green in `style.css`); `hue(i)` in `app.js` applies the class (cycling for more than three columns). Colours must stay readable on the paper (4.5:1), and a picked word's text on its tint (it is darkened toward ink for that); they are not colour-blind-safe by owner's choice.
 - **Accessibility.** One `h1` per screen (`.heading`), with `h2`s (`.subheading`) beneath; `show()` moves focus to the new screen's heading (not on the very first screen). Word lists have one tab stop each (roving tabindex): arrows, Home/End and typing a letter move within a list. The countdown is spoken from `countdownSpoken` (the big numerals are `aria-hidden`). Tally marks have a label. Picked-word text is darkened toward ink so it keeps 4.5:1 on its tint. Decorative ornaments are `aria-hidden`. `smoke.py` asserts the h1, the focus move, the contrast and the keyboard behaviour; run `npm run test:a11y` after UI changes.
 - **Awkward is allowed.** Do not tidy rough edges that are part of the printed look. Fix real defects only (overlap, unreadable text, tap targets under 44px, broken behaviour).
 - **Classic `<script>` tags, not ES modules.** Modules (and `fetch` of JSON) are blocked on `file://`, which would break double-click-to-run. Do not convert to modules or JSON packs without deciding to drop that.
