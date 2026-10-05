@@ -4,6 +4,7 @@ Newest first.
 
 ## Unreleased
 
+- **Docs**: `docs/publishing.md` became `docs/maintaining.md`, a plain maintainer checklist (the one-off history and email notes were removed); the 0.2.1 entry below still uses the old name.
 - **Rotating players (3 to 6)**: setup takes a list of players (add and "strike out" seats, 3 to 6) instead of two duelists and a fixed judge, and the rounds menu is gone. The game is planned up front: every player duels the same number of times (`duelsPerPlayer`, 3, or 2 when players x 3 is odd or there are too few opponents), so 3 players = 3 rounds, 4 = 6, 5 = 5, 6 = 9. Each round two players duel and another judges; the matchup is shown when the device is handed over. Scores run over the whole game.
 - **Scoring**: a win is 2 points, a draw is 1 point for each duelist (the judge scores nothing); both are settings (`pointsForWin`, `pointsForDraw`). The final board is ranked and several players on the top score are reported as a tie naming them all.
 - **Shared names**: players who type the same name (ignoring case) become "Ada I", "Ada II".

@@ -5,7 +5,7 @@ Shipped work lives in [CHANGELOG.md](./CHANGELOG.md). Nothing below is committed
 ## Small
 
 - **Remember the word pack too** — names are already remembered; the same storage code could cover it.
-- **Publish the repo** — work through `docs/publishing.md` (security settings, history check) first.
+- **Publish the repo** — turn on the settings in `docs/maintaining.md` first.
 - **Browser test in CI** — add `npm run test:e2e` to the workflow (needs a browser install step).
 - **Static hosting** — publish via GitHub Pages (needs no build step).
 
