@@ -242,12 +242,53 @@ test("settings: limits and points are sane, and the text config has words for ev
   assert.ok(G.text.romans.length >= st.maxPlayers, "text.romans must cover duplicate-name numbering");
 });
 
+// Small scanners for our own index.html (trusted, repo-controlled). They walk the string instead of
+// using regex replaces, which static analysis rightly distrusts for "sanitising" markup.
+function htmlWithoutComments(html) {
+  let out = "";
+  let i = 0;
+  while (i < html.length) {
+    if (html.startsWith("<!--", i)) {
+      const end = html.indexOf("-->", i + 4);
+      i = end === -1 ? html.length : end + 3;
+    } else {
+      out += html[i++];
+    }
+  }
+  return out;
+}
+
+// The text of `html` that is outside tags, comments, <script> and <style>.
+function htmlTextOutsideTags(html) {
+  const source = htmlWithoutComments(html);
+  let out = "";
+  let i = 0;
+  while (i < source.length) {
+    if (source[i] !== "<") {
+      out += source[i++];
+      continue;
+    }
+    const close = source.indexOf(">", i);
+    if (close === -1) break;
+    const name = source.slice(i + 1, close).trim().split(/\s/)[0].toLowerCase();
+    i = close + 1;
+    if (name === "script" || name === "style") {
+      const end = source.toLowerCase().indexOf(`</${name}`, i);
+      i = end === -1 ? source.length : end; // the closing tag itself is skipped by the next pass
+    }
+  }
+  return out;
+}
+
+test("the html scanners skip comments, tags, scripts and styles but keep real text", () => {
+  assert.strictEqual(htmlWithoutComments("a<!-- x -->b<!-<!-- y -->- c"), "ab<!-- c", "one pass only: a marker formed by removing a comment is left as text");
+  assert.strictEqual(htmlTextOutsideTags("<p class=a>hi <b>there</b></p><!-- no --><script>var t='nope'</script><style>p{}</style>x"), "hi therex");
+  assert.strictEqual(htmlTextOutsideTags("<head><meta content=\"not text\"><title></title></head>"), "");
+});
+
 test("no player-facing text is hard-coded in index.html or style.css", () => {
   const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
-  const bodyText = html
-    .replace(/<script[\s\S]*?<\/script>|<!--[\s\S]*?-->|<style[\s\S]*?<\/style>/g, "")
-    .replace(/<[^>]+>/g, "")
-    .trim();
+  const bodyText = htmlTextOutsideTags(html).trim();
   assert.strictEqual(bodyText, "", `index.html contains text: "${bodyText}"`);
   assert.doesNotMatch(html, /\s(title|alt|aria-label|placeholder)\s*=/i, "index.html has a text attribute (put it in config/text.js)");
   const css = fs.readFileSync(path.join(root, "style.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
@@ -276,7 +317,7 @@ test("site build: the published copy has everything the page loads, and none of 
 });
 
 test("the game loads the full word list only (short.js is kept for tinkering, not loaded)", () => {
-  const html = fs.readFileSync(path.join(root, "index.html"), "utf8").replace(/<!--[\s\S]*?-->/g, "");
+  const html = htmlWithoutComments(fs.readFileSync(path.join(root, "index.html"), "utf8"));
   const packs = [...html.matchAll(/<script src="(packs\/[^"]+)"/g)].map((m) => m[1]);
   assert.deepStrictEqual(packs, ["packs/full.js"]);
 });
